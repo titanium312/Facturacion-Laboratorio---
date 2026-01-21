@@ -1,0 +1,52 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.listaPRocedimiento = exports.procedimientosDB = void 0;
+// 🔹 Exportamos el array para que otros archivos lo usen
+exports.procedimientosDB = [
+    { id: 8704, cups: "901101", nombre: "COLORACION ACIDO ALCOHOL RESISTENTE [ZIELH-NIELSEN] Y LECTURA O BACILOSCOPIA" },
+    { id: 8750, cups: "901235", nombre: "UROCULTIVO [ANTIBIOGRAMA DE DISCO]" },
+    { id: 8762, cups: "901304", nombre: "EXAMEN DIRECTO FRESCO DE CUALQUIER MUESTRA" },
+    { id: 8763, cups: "901305", nombre: "EXAMEN DIRECTO PARA HONGOS [KOH]" },
+    { id: 8891, cups: "902204", nombre: "ERITROSEDIMENTACION [VELOCIDAD SEDIMENTACION GLOBULAR - VSG]" },
+    { id: 8894, cups: "902207", nombre: "HEMOGRAMA I [HEMOGLOBINA, HEMATOCRITO Y LEUCOGRAMA] MÉTODO MANUAL" },
+    { id: 8895, cups: "902208", nombre: "HEMOGRAMA II [HEMOGLOBINA, HEMATOCRITO, RECUENTO DE ERITROCITOS, INDICES ERITROCITARIOS, LEUCOGRAMA, RECUENTO DE PLAQUETAS E INDICES PLAQUETARIOS] MÉTODO MANUAL Y SEMIAUTOMATICO" },
+    { id: 8896, cups: "902209", nombre: "HEMOGRAMA III [HEMOGLOBINA, HEMATOCRITO, RECUENTO DE ERITROCITOS, INDICES ERITROCITARIOS, LEUCOGRAMA, RECUENTO DE PLAQUETAS, INDICES PLAQUETARIOS Y MORFOLOGIA ELECTRONICA] METODO AUTOMÁTICO" },
+    { id: 8897, cups: "902210", nombre: "HEMOGRAMA IV [HEMOGLOBINA, HEMATOCRITO, RECUENTO DE ERITROCITOS, ÍNDICES ERITROCITARIOS, LEUCOGRAMA, RECUENTO DE PLAQUETAS, INDICES PLAQUETARIOS Y MORFOLOGIA ELECTRONICA E HISTOGRAMA] MÉTODO AUTOMÁTICO" },
+    { id: 8898, cups: "902211", nombre: "HEMATOCRITO" },
+    { id: 8900, cups: "902213", nombre: "HEMOGLOBINA" },
+    { id: 8901, cups: "902214", nombre: "HEMOPARASITOS, EXTENDIDO DE GOTA GRUESA" },
+    { id: 8907, cups: "902220", nombre: "RECUENTO DE PLAQUETAS, MÉTODO AUTOMÁTICO" },
+    { id: 8908, cups: "902221", nombre: "RECUENTO DE PLAQUETAS, MÉTODO MANUAL" },
+    { id: 9079, cups: "903801", nombre: "ACIDO URICO" },
+    { id: 9087, cups: "903809", nombre: "BILIRRUBINAS TOTAL Y DIRECTA" },
+    { id: 9091, cups: "903813", nombre: "CLORO [CLORURO]" },
+    { id: 9093, cups: "903815", nombre: "COLESTEROL DE ALTA DENSIDAD [HDL]" },
+    { id: 9094, cups: "903816", nombre: "COLESTEROL DE BAJA DENSIDAD [LDL] ENZIMATICO" },
+    { id: 9096, cups: "903818", nombre: "COLESTEROL TOTAL" },
+    { id: 11803, cups: "903841", nombre: "GLUCOSA EN SUERO U OTRO FLUIDO DIFERENTE A ORINA" },
+    { id: 9119, cups: "903841", nombre: "GLUCOSA EN SUERO, LCR U OTRO FLUIDO DIFERENTE A ORINA" },
+    { id: 9121, cups: "903843", nombre: "GLUCOSA PRE Y POST PRANDIAL" },
+    { id: 9122, cups: "903844", nombre: "GLUCOSA, CURVA DE TOLERANCIA" },
+    { id: 9123, cups: "903845", nombre: "GLUCOSA, TEST O’ SULLIVAN" },
+    { id: 9134, cups: "903856", nombre: "NITROGENO UREICO [BUN]" },
+    { id: 9146, cups: "903868", nombre: "TRIGLICÉRIDOS" },
+    { id: 9173, cups: "903895", nombre: "CREATININA EN SUERO U OTROS FLUIDOS" },
+    { id: 9218, cups: "904508", nombre: "GONADOTROPINA CORIÓNICA, SUBUNIDAD BETA CUALITATIVA, [BHCG] PRUEBA DE EMBARAZO EN ORINA O SUERO" },
+    { id: 9463, cups: "906039", nombre: "TREPONEMA PALLIDUM ANTICUERPOS (PRUEBA TREPONEMICA) MANUAL O SEMIAUTOMATIZADA O AUTOMATIZADA" },
+    { id: 9566, cups: "906249", nombre: "VIH 1 Y 2, ANTICUERPOS" },
+    { id: 9898, cups: "907002", nombre: "COPROLÓGICO" },
+    { id: 9904, cups: "907008", nombre: "SANGRE OCULTA EN MATERIA FECAL [GUAYACO O EQUIVALENTE]" },
+    //{ id: 9908, cups: "907012", nombre: "SANGRE OCULTA EN MATERIA FECAL [GUAYACO O EQUIVALENTE] SERIADO TRES MUESTRAS" },
+    { id: 9918, cups: "907106", nombre: "UROANALISIS CON SEDIMENTO Y DENSIDAD URINARIA" },
+    { id: 10126, cups: "911015", nombre: "HEMOCLASIFICACION FACTOR Rh [FACTOR D] POR MICROTECNICA" },
+    { id: 10128, cups: "911017", nombre: "HEMOCLASIFICACION GRUPO ABO, DIRECTA O GLOBULAR POR MICROTÉCNICA" }
+];
+const listaPRocedimiento = async (req, res) => {
+    try {
+        return res.status(200).json(exports.procedimientosDB);
+    }
+    catch (error) {
+        return res.status(500).json({ message: "Error al obtener la lista" });
+    }
+};
+exports.listaPRocedimiento = listaPRocedimiento;
