@@ -4,7 +4,6 @@
   "private": true,
   "scripts": {
     "build": "tsc",
-    "prestart": "npm run build",
     "start": "node dist/app.js"
   },
   "dependencies": {
@@ -14,8 +13,6 @@
   "devDependencies": {
     "@types/express": "^4.17.25",
     "@types/node": "^20.19.30",
-    "ts-node": "^10.9.2",
-    "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.3"
   }
 }
