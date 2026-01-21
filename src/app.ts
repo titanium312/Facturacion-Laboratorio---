@@ -3,10 +3,11 @@ import router from "./Router/Router";
 import path from "path";
 
 const app = express();
+const PORT = 3000;
 
 app.use(express.json());
 
-// ✅ siempre apunta a la raíz del proyecto
+// ✅ SIEMPRE apunta a la raíz del proyecto
 const publicPath = path.join(process.cwd(), "public");
 
 app.use(express.static(publicPath));
@@ -15,9 +16,8 @@ app.get("/", (req: Request, res: Response) => {
   res.sendFile(path.join(publicPath, "index.html"));
 });
 
-// tus rutas
 app.use("/Roberto", router);
 
-// ❌ NO listen()
-// ✅ EXPORTA la app
-export default app;
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
+});
