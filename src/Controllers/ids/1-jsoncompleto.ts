@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { buscarPacienteData } from "./2-BuscarPacienteFactura";
 import { historia } from "./3-Historia";
-import { procedimientosDB } from "./3.5-listaPRocedimiento"; 
+import { procedimientosDB } from "./arrays/3.5-listaPRocedimiento"; 
 
 export const jsoncompleto = async (req: Request, res: Response) => {
   try {

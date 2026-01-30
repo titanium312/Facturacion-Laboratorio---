@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.jsoncompleto = void 0;
 const _2_BuscarPacienteFactura_1 = require("./2-BuscarPacienteFactura");
 const _3_Historia_1 = require("./3-Historia");
-const _3_5_listaPRocedimiento_1 = require("./3.5-listaPRocedimiento");
+const _3_5_listaPRocedimiento_1 = require("./arrays/3.5-listaPRocedimiento");
 const jsoncompleto = async (req, res) => {
     try {
         const { numeroDocumento } = req.query;

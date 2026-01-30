@@ -1,44 +1,60 @@
 import { Request, Response } from "express";
 import axios from "axios";
 
-export const idProcedimiento = async (req: Request, res: Response) => {
+export const BuscarProdecidento = async (req: Request, res: Response) => {
   try {
-    const { nombreProcedimiento } = req.query;
+    const { id_historia_clinica } = req.query;
 
-    if (!nombreProcedimiento) {
-      return res.status(400).json({
-        message: "El parámetro nombreProcedimiento es obligatorio",
-      });
+    if (!id_historia_clinica) {
+      return res.status(400).json({ message: "id_historia_clinica requerido" });
     }
 
-    const response = await axios.get(
-      "https://balance.saludplus.co/procedimientos/ProcedimientosBuscarNombre",
+    const url =
+      "https://balance.saludplus.co/historiaClinicaUnificada/BucardorHistoriaProcedimientosDiagnosticosDetalle";
+
+    const response = await axios.post(
+      url,
       {
-        params: {
-          nombreProcedimiento,
-          capitulos: "",
-          _: Date.now(),
-        },
+        accion: "TRAE",
+        id_historia_clinica: Number(id_historia_clinica),
+      },
+      {
         headers: {
-          "X-Requested-With": "XMLHttpRequest",
-          "data":
-            "AQSl6hWJhjPIqRE5FVxQEj2m+tBylqGIYr3XszOGeF8=.1SS9/UCeyjpq9PyT8MBqPg==.wcFkBNOeMUO3EbN8I4nUXw==",
+          "Content-Type": "application/json",
+          data: "AQSl6hWJhjPIqRE5FVxQEj2m+tBylqGIYr3XszOGeF8=.1SS9/UCeyjpq9PyT8MBqPg==.wcFkBNOeMUO3EbN8I4nUXw==",
         },
+        responseType: "text",
       }
     );
 
-    // Filtrar solo los que coincidan exactamente con el código inicial
-    const procedimientosFiltrados = response.data
-      .filter((p: any) => p.text.startsWith(nombreProcedimiento as string))
-      .map((p: any) => ({
-        id_procedimiento: p.id,
-        IdServicio: p.IdServicio,
-      }));
+    const html: string = response.data;
 
-    return res.status(200).json(procedimientosFiltrados);
+    // 🔎 REGEX PARA EXTRAER CUP + NOMBRE
+    // ejemplo: '903895 - GLUCOSA EN SUERO'
+    const regex = /(\d{6})\s*-\s*([^<\r\n]+)/g;
+
+    const procedimientos: { cup: string; nombre: string }[] = [];
+    const vistos = new Set();
+
+    let match;
+    while ((match = regex.exec(html)) !== null) {
+      const cup = match[1];
+      const nombre = match[2].trim();
+
+      const key = cup + nombre;
+      if (!vistos.has(key)) {
+        vistos.add(key);
+        procedimientos.push({ cup, nombre });
+      }
+    }
+
+    return res.json({
+      total: procedimientos.length,
+      procedimientos,
+    });
   } catch (error: any) {
     return res.status(500).json({
-      message: "Error consultando procedimientos",
+      message: "Error procesando procedimientos",
       error: error.message,
     });
   }

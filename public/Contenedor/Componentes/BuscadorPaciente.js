@@ -1,16 +1,32 @@
 import { LitElement, html, css } from 'https://unpkg.com/lit@2.7.5?module';
-import './SelectorContrato.js';
-import './MedicoFiltro.js';
-import './LaboratorioProcedimientos.js';
-import './Facturar.js';
-import './LOOGUIN.js'; // login-component
+import './subcomponents/SelectorContrato.js';
+import './subcomponents/MedicoFiltro.js';
+import './subcomponents/LaboratorioProcedimientos.js';
+import './subcomponents/ListaEntidades.js';
+import './subcomponents/Facturar.js';
+import './subcomponents/LOOGUIN.js';
+
+import { BusquedaManager } from './modules/BusquedaManager.js';
+import { FacturacionManager } from './modules/FacturacionManager.js';
+import { UIComponents } from './modules/UIComponents.js';
+import { Utils } from './modules/utils.js';
+
+import style from './BuscadorPacienteStyles.js';
+
 
 class BuscadorPaciente extends LitElement {
   static properties = {
-    numeroDocumento: { type: String },
+    // 🔹 Búsqueda
+    numeroAdmision: { type: String },
+    documentoPaciente: { type: String },
+    tipoBusqueda: { type: String },
+    
+    // 🔹 Resultados
     data: { type: Object },
     cargando: { type: Boolean },
     error: { type: String },
+    
+    // 🔹 Facturación
     contratoSeleccionado: { type: String },
     valoresProcedimientos: { type: Object },
     fkUsuario: { type: String },
@@ -18,90 +34,197 @@ class BuscadorPaciente extends LitElement {
     procedimientosAgregados: { type: Array },
     facturaData: { type: Object },
     facturadorId: { type: Number },
-    facturadorNombre: { type: String }
+    facturadorNombre: { type: String },
+    
+    // 🔹 Para búsqueda por documento
+    pacienteDocumentoEncontrado: { type: Object },
+    mostrarFormularioFacturacion: { type: Boolean },
+    admisionManual: { type: String },
+    cargandoValores: { type: Boolean }
   };
 
   constructor() {
     super();
-    this.numeroDocumento = '';
+    this.busquedaManager = new BusquedaManager(this);
+    this.facturacionManager = new FacturacionManager(this);
+    this.resetearEstadoCompleto();
+  }
+
+  static styles = style;
+
+  resetearEstadoCompleto() {
+    // 🔹 Búsqueda
+    this.numeroAdmision = '';
+    this.documentoPaciente = '';
+    this.tipoBusqueda = 'admision';
+    
+    // 🔹 Resultados
     this.data = null;
     this.cargando = false;
     this.error = '';
+    
+    // 🔹 Facturación
     this.contratoSeleccionado = '';
     this.valoresProcedimientos = {};
     this.fkUsuario = '';
     this.fkUsuarioHistoria = '';
     this.procedimientosAgregados = [];
     this.facturaData = null;
-    this.facturadorId = null;
-    this.facturadorNombre = '';
+    
+    // 🔹 Para búsqueda por documento
+    this.pacienteDocumentoEncontrado = null;
+    this.mostrarFormularioFacturacion = false;
+    this.admisionManual = '';
+    this.cargandoValores = false;
   }
 
-  static styles = css`
-    .card { border: 1px solid #ddd; border-radius: 10px; padding: 16px; max-width: 900px; font-family: Arial, sans-serif; background: #fafafa; margin: auto; }
-    input { padding: 8px; margin-right: 8px; width: 220px; }
-    button { padding: 8px 14px; cursor: pointer; }
-    .error { color: red; margin-top: 10px; }
-    .section { margin-top: 16px; padding-top: 10px; border-top: 1px solid #ccc; }
-    .row { margin-bottom: 6px; }
-    .label { font-weight: bold; }
-    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-    th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
-    th { background: #eee; }
-  `;
-
   render() {
-    // 🔹 Si no hay facturador logueado, mostrar login
     if (!this.facturadorId) {
-      return html`
-        <div class="card">
-          <h3>Login de facturador</h3>
-          <login-component @login-success=${this.onLoginSuccess}></login-component>
-        </div>
-      `;
+      return this.renderLogin();
     }
 
-    // 🔹 Si está logueado, mostrar buscador de paciente
     return html`
       <div class="card">
-        <h3>Consulta de paciente</h3>
-
-        <div class="row">
-          <span class="label">Facturador:</span> ${this.facturadorNombre} (ID: ${this.facturadorId})
+        <div class="facturador-info">
+          <strong>Facturador:</strong> ${this.facturadorNombre} (ID: ${this.facturadorId})
         </div>
 
-        <input
-          type="text"
-          placeholder="Número de admisión"
-          .value=${this.numeroDocumento}
-          @input=${e => (this.numeroDocumento = e.target.value)}
-        />
-
-        <button @click=${this.buscar} ?disabled=${this.cargando}>
-          ${this.cargando ? 'Buscando...' : 'Buscar'}
-        </button>
-
-        ${this.error ? html`<div class="error">${this.error}</div>` : ''}
-        ${this.data ? this.renderResultado() : ''}
-        ${this.facturaData ? html`<boton-facturar .data=${this.facturaData}></boton-facturar>` : ''}
+        ${this.renderBuscador()}
+        ${this.renderContenido()}
       </div>
     `;
   }
 
-  // ----------------------------
-  // 🔹 Login Success
-  // ----------------------------
-  onLoginSuccess(e) {
-    this.facturadorId = e.detail.idFacturador;
-    this.facturadorNombre = e.detail.nombre;
+  renderLogin() {
+    return html`
+      <div class="card">
+        <h3>🔐 Login de Facturador</h3>
+        <login-component @login-success=${this.onLoginSuccess}></login-component>
+      </div>
+    `;
+  }
+
+  renderBuscador() {
+    const config = this.busquedaManager.getConfigActual();
+    
+    return html`
+      <div class="busqueda-container">
+        <h3>🔍 Búsqueda de Paciente</h3>
+        
+        <div class="tipo-busqueda">
+          <label>
+            <input 
+              type="radio" 
+              name="tipoBusqueda" 
+              value="admision" 
+              ?checked=${this.tipoBusqueda === 'admision'}
+              @change=${this.cambiarTipoBusqueda}
+            />
+            <span>Por Número de Admisión</span>
+          </label>
+          
+          <label>
+            <input 
+              type="radio" 
+              name="tipoBusqueda" 
+              value="documento" 
+              ?checked=${this.tipoBusqueda === 'documento'}
+              @change=${this.cambiarTipoBusqueda}
+            />
+            <span>Por Documento del Paciente</span>
+          </label>
+        </div>
+
+        <div class="input-group">
+          <label>${config.label}:</label>
+          <input
+            type="text"
+            placeholder="${config.placeholder}"
+            .value=${this.busquedaManager.getValorBusqueda()}
+            @input=${this.handleInputBusqueda}
+            @keypress=${this.handleKeyPressBusqueda}
+          />
+        </div>
+
+        <button @click=${this.buscar} ?disabled=${this.cargando || !this.busquedaManager.getValorBusqueda()}>
+          ${this.cargando ? '🔍 Buscando...' : '🔍 Buscar Paciente'}
+        </button>
+
+        ${this.error ? html`<div class="error">❌ ${this.error}</div>` : ''}
+        ${this.data?.mensaje ? html`<div class="success">✅ ${this.data.mensaje}</div>` : ''}
+      </div>
+    `;
+  }
+
+  renderContenido() {
+    if (!this.data) return '';
+
+    if (this.tipoBusqueda === 'admision') {
+      return html`
+        ${this.renderResultadoAdmision()}
+        ${this.facturaData ? html`<boton-facturar .data=${this.facturaData}></boton-facturar>` : ''}
+      `;
+    } else {
+      return html`
+        ${this.renderResultadoDocumento()}
+        ${this.renderFormularioFacturacionPorDocumento()}
+        ${this.facturaData ? html`<boton-facturar .data=${this.facturaData}></boton-facturar>` : ''}
+      `;
+    }
   }
 
   // ----------------------------
-  // 🔹 Render paciente y procedimientos
+  // 🔹 Métodos de UI simplificados
   // ----------------------------
-  renderResultado() {
+  cambiarTipoBusqueda = (e) => {
+    const nuevoTipo = e.target.value;
+    if (nuevoTipo === this.tipoBusqueda) return;
+    
+    this.tipoBusqueda = nuevoTipo;
+    this.resetearEstadoFacturacion();
+    this.pacienteDocumentoEncontrado = null;
+    this.mostrarFormularioFacturacion = false;
+  };
+
+  handleInputBusqueda = (e) => {
+    if (this.tipoBusqueda === 'admision') {
+      this.numeroAdmision = e.target.value;
+    } else {
+      this.documentoPaciente = e.target.value;
+    }
+  };
+
+  handleKeyPressBusqueda = (e) => {
+    if (e.key === 'Enter') this.buscar();
+  };
+
+  // ----------------------------
+  // 🔹 Métodos de búsqueda simplificados
+  // ----------------------------
+  async buscar() {
+    this.cargando = true;
+    this.error = '';
+    this.data = null;
+    this.resetearEstadoFacturacion();
+    this.pacienteDocumentoEncontrado = null;
+    this.mostrarFormularioFacturacion = false;
+
+    try {
+      const json = await this.busquedaManager.buscar();
+      this.pacienteDocumentoEncontrado = this.busquedaManager.procesarResultadoBusqueda(json);
+    } catch (error) {
+      this.error = error.message;
+    } finally {
+      this.cargando = false;
+    }
+  }
+
+  // ----------------------------
+  // 🔹 Renderizado de resultados
+  // ----------------------------
+  renderResultadoAdmision() {
     const item = this.data.resultadoCompleto?.[0];
-    if (!item) return html`<div>No hay datos</div>`;
+    if (!item) return html`<div class="error">No se encontraron datos para esta admisión</div>`;
 
     const { paciente, historia } = item;
 
@@ -110,150 +233,301 @@ class BuscadorPaciente extends LitElement {
       this.fkUsuario = this.fkUsuarioHistoria;
     }
 
-    const procedimientosValidosOriginales = historia.todos_procedimientos.filter(
-      p => p.nombreProcedimiento !== 'Procedimiento no encontrado'
-    );
-
-    const procedimientosValidos = [
-      ...procedimientosValidosOriginales,
-      ...this.procedimientosAgregados
-    ];
+    const procedimientosValidos = this.obtenerProcedimientosValidos(historia);
 
     return html`
       <div class="section">
-        <h4>📌 Meta respuesta</h4>
-        <div class="row"><span class="label">OK:</span> ${this.data.ok}</div>
-        <div class="row"><span class="label">Número consultado:</span> ${this.data.numeroDocumento}</div>
-        <div class="row"><span class="label">Fecha consulta:</span> ${this.data.fechaConsulta}</div>
+        <h4>📊 Información de Admisión</h4>
+        <div class="row"><span class="label">Estado:</span> <span class="value">✅ ${this.data.ok ? 'Encontrado' : 'No encontrado'}</span></div>
+        <div class="row"><span class="label">Número consultado:</span> <span class="value">${this.data.numeroDocumento}</span></div>
+        <div class="row"><span class="label">Fecha consulta:</span> <span class="value">${this.data.fechaConsulta}</span></div>
       </div>
 
       <div class="section">
-        <h4>👤 Paciente</h4>
-        ${Object.entries(paciente).map(
-          ([k, v]) => html`<div class="row"><span class="label">${k}:</span> ${v}</div>`
-        )}
+        <h4>👤 Información del Paciente</h4>
+        ${UIComponents.renderDatosPaciente(paciente)}
+      </div>
+
+      ${this.renderHistoriaYProcedimientos(historia, procedimientosValidos)}
+    `;
+  }
+
+  renderResultadoDocumento() {
+    if (this.pacienteDocumentoEncontrado && this.mostrarFormularioFacturacion) {
+      return html`
+        <div class="section">
+          <h4>✅ Paciente Encontrado</h4>
+          <p>Paciente encontrado con el documento ${this.documentoPaciente}. Puede proceder a facturar directamente.</p>
+        </div>
+
+        <div class="section">
+          <h4>👤 Información del Paciente</h4>
+          ${UIComponents.renderDatosPaciente(this.pacienteDocumentoEncontrado)}
+        </div>
+      `;
+    }
+
+    if (!this.data || !this.data.id_paciente) {
+      return html`
+        <div class="error">
+          No se encontró paciente con documento ${this.documentoPaciente}
+        </div>
+      `;
+    }
+
+    return html`
+      <div class="section">
+        <h4>✅ Paciente Encontrado</h4>
+        <p>Se encontró un paciente con el documento proporcionado.</p>
+        
+        <button 
+          @click=${this.iniciarFacturacionPorDocumento}
+          style="margin-top: 15px; background: #4caf50;"
+        >
+          🧾 Iniciar Facturación
+        </button>
       </div>
 
       <div class="section">
-        <h4>📂 Historia</h4>
+        <h4>👤 Información del Paciente</h4>
+        ${UIComponents.renderDatosPaciente(this.data)}
+      </div>
+    `;
+  }
 
+  renderFormularioFacturacionPorDocumento() {
+    if (!this.mostrarFormularioFacturacion || !this.pacienteDocumentoEncontrado) return '';
+
+    const procedimientosValidos = this.procedimientosAgregados;
+
+    return html`
+      <div class="formulario-facturacion">
+        <h4>🧾 Facturación Directa por Documento</h4>
+        
+        <div class="form-row">
+          <span class="form-label">Número de Admisión:</span>
+          <input 
+            type="text" 
+            class="form-input"
+            placeholder="Ingrese número de admisión manual"
+            .value=${this.admisionManual}
+            @input=${e => this.admisionManual = e.target.value}
+          />
+        </div>
+
+        <div class="section">
+          <h4>🏥 Entidad y Contrato</h4>
+          
+          <lista-entidades
+            .fk_entidad=${this.pacienteDocumentoEncontrado?.fk_entidad || ''}
+            @entidad-seleccionada=${this.onEntidadSeleccionadaPorDocumento}>
+          </lista-entidades>
+          
+          ${this.pacienteDocumentoEncontrado?.fk_entidad ? html`
+            <selector-contrato
+              identidad="${this.pacienteDocumentoEncontrado.fk_entidad}"
+              fechaemision="${Utils.getFechaActualISO()}"
+              @contrato-seleccionado=${this.onContratoSeleccionadoPorDocumento}>
+            </selector-contrato>
+          ` : ''}
+
+          ${this.contratoSeleccionado ? html`
+
+            <medico-filtro
+              id-contrato="${this.contratoSeleccionado}"
+              @medico-seleccionado=${this.onMedicoSeleccionadoPorDocumento}>
+            </medico-filtro>
+          ` : ''}
+        </div>
+
+        <div class="section">
+          <h4>🧪 Procedimientos</h4>
+          
+          <laboratorio-procedimientos 
+            @procedimiento-seleccionado=${this.onProcedimientoAgregadoPorDocumento}>
+          </laboratorio-procedimientos>
+
+          ${UIComponents.renderTablaProcedimientos(procedimientosValidos, this)}
+          ${UIComponents.renderTotal(procedimientosValidos, this.valoresProcedimientos, this.contratoSeleccionado)}
+        </div>
+
+        <div class="section">
+          <button 
+            @click=${() => this.prepararFacturaPorDocumento(procedimientosValidos)}
+            ?disabled=${!this.contratoSeleccionado || procedimientosValidos.length === 0}
+            style="padding: 12px 24px; background: #4caf50;"
+          >
+            ${this.cargandoValores ? '🔄 Calculando...' : '🧾 Generar Factura'}
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  // ----------------------------
+  // 🔹 MÉTODO QUE FALTABA: renderHistoriaYProcedimientos
+  // ----------------------------
+  renderHistoriaYProcedimientos(historia, procedimientosValidos) {
+    return html`
+      <div class="section">
+        <h4>📂 Información de la Historia</h4>
+
+        <lista-entidades
+          .fk_entidad=${historia.fk_entidad}
+          @entidad-seleccionada=${this.onEntidadSeleccionada}>
+        </lista-entidades>
+        
         <selector-contrato
           identidad="${historia.fk_entidad}"
-          fechaemision="${this.formatFechaISO(historia.fecha_admision)}"
+          fechaemision="${Utils.formatFechaISO(historia.fecha_admision)}"
           @contrato-seleccionado=${this.onContratoSeleccionado}>
         </selector-contrato>
 
-        ${this.contratoSeleccionado
-          ? html`
-              <div class="row">
-                <span class="label">fk_contrato_entidad:</span>
-                ${this.contratoSeleccionado}
-              </div>
+        ${this.contratoSeleccionado ? html`
+          <div class="row">
+            <span class="label">Contrato seleccionado:</span>
+            <span class="value">${this.contratoSeleccionado}</span>
+          </div>
 
-              <medico-filtro
-                id-contrato="${this.contratoSeleccionado}"
-                .filtro=${this.fkUsuarioHistoria}
-                .selectedId=${this.fkUsuario}
-                @medico-seleccionado=${this.onMedicoSeleccionado}>
-              </medico-filtro>
-            `
-          : ''}
+          <medico-filtro
+            id-contrato="${this.contratoSeleccionado}"
+            .selectedId=${this.fkUsuarioHistoria}
+            @medico-seleccionado=${this.onMedicoSeleccionado}>
+          </medico-filtro>
+        ` : ''}
 
-        ${Object.entries(historia).map(([k, v]) => {
-          if (k === 'todos_procedimientos' || k === 'conteo_procedimientos') return '';
-          if (k === 'fecha_admision') return html`<div class="row"><span class="label">fecha_admision:</span>${this.formatFecha(v)}</div>`;
-          return html`<div class="row"><span class="label">${k}:</span> ${v}</div>`;
-        })}
+        ${this.renderDatosHistoria(historia)}
       </div>
 
       <div class="section">
         <h4>🧪 Procedimientos</h4>
-        ${this.renderTablaProcedimientos(procedimientosValidos)}
-        ${this.contratoSeleccionado ? this.renderTotal(procedimientosValidos) : ''}
-        ${this.contratoSeleccionado ? html`<button @click=${() => this.prepararFactura(procedimientosValidos)}>Generar Factura</button>` : ''}
+        
+        <laboratorio-procedimientos 
+          @procedimiento-seleccionado=${this.onProcedimientoAgregado}>
+        </laboratorio-procedimientos>
+
+        ${UIComponents.renderTablaProcedimientos(procedimientosValidos, this)}
+        ${UIComponents.renderTotal(procedimientosValidos, this.valoresProcedimientos, this.contratoSeleccionado)}
+        
+        ${this.contratoSeleccionado ? html`
+          <button 
+            @click=${() => this.prepararFactura(procedimientosValidos)}
+            style="margin-top: 15px; padding: 12px 24px; background: #4caf50;"
+          >
+            🧾 Generar Factura
+          </button>
+        ` : ''}
       </div>
     `;
   }
 
-  renderTablaProcedimientos(lista) {
-    if (!lista || lista.length === 0) return html`<div class="row">No hay registros</div>`;
-
-    return html`
-      <laboratorio-procedimientos @procedimiento-seleccionado=${this.onProcedimientoAgregado}></laboratorio-procedimientos>
-
-      <table>
-        <thead>
-          <tr>
-            <th>tipo</th>
-            <th>cantidad</th>
-            <th>fk_procedimiento</th>
-            <th>cup</th>
-            <th>nombreProcedimiento</th>
-            <th>valor</th>
-            <th>acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${lista.map(p => {
-            const valor = this.valoresProcedimientos[p.fk_procedimiento] ?? 0;
-            return html`
-              <tr>
-                <td>${p.tipo ?? ''}</td>
-                <td>${p.cantidad ?? ''}</td>
-                <td>${p.fk_procedimiento ?? ''}</td>
-                <td>${p.cup ?? ''}</td>
-                <td>${p.nombreProcedimiento ?? ''}</td>
-                <td>$${valor.toLocaleString()}</td>
-                <td>
-                  <button @click=${() => this.eliminarProcedimiento(p.fk_procedimiento)}>❌</button>
-                </td>
-              </tr>
-            `;
-          })}
-        </tbody>
-      </table>
-    `;
+  renderDatosHistoria(historia) {
+    return Object.entries(historia).map(([k, v]) => {
+      if (k === 'todos_procedimientos' || k === 'conteo_procedimientos') return '';
+      if (k === 'fecha_admision') return html`
+        <div class="row">
+          <span class="label">Fecha de Admisión:</span>
+          <span class="value">${Utils.formatFecha(v)}</span>
+        </div>`;
+      return html`
+        <div class="row">
+          <span class="label">${Utils.formatKey(k)}:</span>
+          <span class="value">${v}</span>
+        </div>`;
+    });
   }
 
-  async cargarValoresProcedimientos(listaProcedimientos) {
-    if (!this.contratoSeleccionado) return;
+  // ----------------------------
+  // 🔹 Métodos específicos por tipo de búsqueda
+  // ----------------------------
+  iniciarFacturacionPorDocumento = () => {
+    if (!this.data || !this.data.id_paciente) return;
+    
+    this.pacienteDocumentoEncontrado = {
+      fk_paciente: this.data.id_paciente,
+      fk_entidad: this.data.fk_entidad || '',
+      documento_paciente: this.data.documento_paciente,
+      nombre1_paciente: this.data.nombre1_paciente,
+      nombre2_paciente: this.data.nombre2_paciente,
+      apellido1_paciente: this.data.apellido1_paciente,
+      apellido2_paciente: this.data.apellido2_paciente,
+      fecha_nacimiento: this.data.fecha_nacimiento
+    };
+    
+    this.mostrarFormularioFacturacion = true;
+    this.requestUpdate();
+  };
 
-    const nuevosValores = { ...this.valoresProcedimientos };
+  // ----------------------------
+  // 🔹 Métodos de gestión de procedimientos
+  // ----------------------------
+  obtenerProcedimientosValidos(historia) {
+    const procedimientosValidosOriginales = historia.todos_procedimientos.filter(
+      p => p.nombreProcedimiento !== 'Procedimiento no encontrado'
+    );
 
-    for (const p of listaProcedimientos) {
-      if (!p.fk_procedimiento) continue;
-      if (nuevosValores[p.fk_procedimiento] !== undefined) continue;
-
-      try {
-        const resp = await fetch(
-          `/roberto/valorPRocedimiento?idContrato=${encodeURIComponent(this.contratoSeleccionado)}&idProcedimiento=${encodeURIComponent(p.fk_procedimiento)}`
-        );
-        if (!resp.ok) throw new Error('HTTP ' + resp.status);
-        const json = await resp.json();
-        nuevosValores[p.fk_procedimiento] = json.valor ?? 0;
-      } catch {
-        nuevosValores[p.fk_procedimiento] = 0;
-      }
-    }
-
-    this.valoresProcedimientos = nuevosValores;
+    return [
+      ...procedimientosValidosOriginales,
+      ...this.procedimientosAgregados
+    ];
   }
 
-  async onContratoSeleccionado(e) {
+  // ----------------------------
+  // 🔹 Métodos de event handlers
+  // ----------------------------
+  onLoginSuccess(e) {
+    this.facturadorId = e.detail.idFacturador;
+    this.facturadorNombre = e.detail.nombre;
+  }
+
+  onEntidadSeleccionada = e => {
+    const historia = this.data?.historia;
+    if (!historia) return;
+    historia.fk_entidad = String(e.detail.fk_entidad);
+    this.requestUpdate();
+  };
+
+  onEntidadSeleccionadaPorDocumento = e => {
+    if (!this.pacienteDocumentoEncontrado) return;
+    this.pacienteDocumentoEncontrado.fk_entidad = String(e.detail.fk_entidad);
+    this.requestUpdate();
+  };
+
+  onContratoSeleccionado = async (e) => {
     this.contratoSeleccionado = e.detail.id_contrato_entidad;
     const historia = this.data?.resultadoCompleto?.[0]?.historia;
     this.fkUsuarioHistoria = historia?.fk_usuario || '';
     this.fkUsuario = this.fkUsuarioHistoria;
     this.procedimientosAgregados = [];
-    await this.cargarValoresProcedimientos(historia.todos_procedimientos || []);
+    
+    if (historia?.todos_procedimientos) {
+      await this.facturacionManager.cargarValoresProcedimientos(historia.todos_procedimientos || []);
+    }
+    
     this.requestUpdate();
-  }
+  };
+
+  onContratoSeleccionadoPorDocumento = async (e) => {
+    this.contratoSeleccionado = e.detail.id_contrato_entidad;
+    this.procedimientosAgregados = [];
+    
+    if (this.procedimientosAgregados.length > 0) {
+      await this.facturacionManager.cargarValoresProcedimientos(this.procedimientosAgregados);
+    }
+    
+    this.requestUpdate();
+  };
 
   async onProcedimientoAgregado(e) {
     const p = e.detail;
-    const historia = this.data?.resultadoCompleto?.[0]?.historia;
+    const item = this.data?.resultadoCompleto?.[0];
+    const historia = item?.historia;
+    
+    if (!historia) return;
+    
     const existe = historia.todos_procedimientos.some(x => x.fk_procedimiento === p.id) ||
                    this.procedimientosAgregados.some(x => x.fk_procedimiento === p.id);
+    
     if (existe) return;
 
     const nuevoProc = {
@@ -265,17 +539,34 @@ class BuscadorPaciente extends LitElement {
     };
 
     this.procedimientosAgregados = [...this.procedimientosAgregados, nuevoProc];
-    await this.cargarValoresProcedimientos([nuevoProc]);
+    await this.facturacionManager.cargarValoresProcedimientos([nuevoProc]);
     this.requestUpdate();
   }
 
-  eliminarProcedimiento(id) {
-    const historia = this.data?.resultadoCompleto?.[0]?.historia;
-    if (!historia) return;
+  async onProcedimientoAgregadoPorDocumento(e) {
+    const p = e.detail;
+    
+    if (!this.pacienteDocumentoEncontrado) return;
+    if (this.procedimientosAgregados.some(x => x.fk_procedimiento === p.id)) return;
 
-    historia.todos_procedimientos = historia.todos_procedimientos.filter(p => p.fk_procedimiento !== id);
-    this.procedimientosAgregados = this.procedimientosAgregados.filter(p => p.fk_procedimiento !== id);
+    const nuevoProc = {
+      fk_procedimiento: p.id,
+      cup: p.cups,
+      nombreProcedimiento: p.nombre,
+      tipo: 'diagnóstico',
+      cantidad: 1
+    };
 
+    this.procedimientosAgregados = [...this.procedimientosAgregados, nuevoProc];
+    
+    if (this.contratoSeleccionado) {
+      const valor = await this.facturacionManager.cargarValorProcedimiento(p.id);
+      this.valoresProcedimientos = {
+        ...this.valoresProcedimientos,
+        [p.id]: valor
+      };
+    }
+    
     this.requestUpdate();
   }
 
@@ -288,81 +579,73 @@ class BuscadorPaciente extends LitElement {
     this.fkUsuarioHistoria = nuevo;
   };
 
-  renderTotal(lista) {
-    let total = 0;
-    for (const p of lista) {
-      const valor = this.valoresProcedimientos[p.fk_procedimiento] || 0;
-      total += valor * (p.cantidad || 1);
+  onMedicoSeleccionadoPorDocumento = (e) => {
+    this.fkUsuario = String(e.detail.id);
+    this.requestUpdate();
+  };
+
+  eliminarProcedimiento(id) {
+    const item = this.data?.resultadoCompleto?.[0];
+    const historia = item?.historia;
+    
+    if (!historia) return;
+
+    historia.todos_procedimientos = historia.todos_procedimientos.filter(p => p.fk_procedimiento !== id);
+    this.procedimientosAgregados = this.procedimientosAgregados.filter(p => p.fk_procedimiento !== id);
+
+    this.requestUpdate();
+  }
+
+  eliminarProcedimientoPorDocumento = (id) => {
+    this.procedimientosAgregados = this.procedimientosAgregados.filter(p => p.fk_procedimiento !== id);
+    const nuevosValores = { ...this.valoresProcedimientos };
+    delete nuevosValores[id];
+    this.valoresProcedimientos = nuevosValores;
+    this.requestUpdate();
+  };
+
+  // ----------------------------
+  // 🔹 Métodos de preparación de factura
+  // ----------------------------
+  prepararFactura(listaProcedimientos) {
+    try {
+      this.facturaData = this.facturacionManager.prepararFacturaAdmision(listaProcedimientos);
+      console.log('Datos para facturación por admisión:', this.facturaData);
+      this.requestUpdate();
+    } catch (error) {
+      this.error = error.message;
     }
-
-    return html`<div class="row" style="margin-top:10px;font-size:18px"><b>Total factura:</b> $${total.toLocaleString()}</div>`;
   }
 
-  formatFecha(dotNetDate) {
-    if (!dotNetDate) return 'N/A';
-    const match = /\/Date\((\d+)\)\//.exec(dotNetDate);
-    if (!match) return dotNetDate;
-    return new Date(Number(match[1])).toLocaleDateString();
-  }
-
-  formatFechaISO(dotNetDate) {
-    if (!dotNetDate) return '';
-    const match = /\/Date\((\d+)\)\//.exec(dotNetDate);
-    if (!match) return '';
-    return new Date(Number(match[1])).toISOString().split('T')[0];
-  }
-
-  async buscar() {
-    if (!this.numeroDocumento) {
-      this.error = 'Debe ingresar un número de admisión';
-      return;
+  prepararFacturaPorDocumento = async (listaProcedimientos) => {
+    try {
+      this.facturacionManager.validarDatosFacturacionDocumento();
+      
+      this.cargandoValores = true;
+      this.requestUpdate();
+      
+      await this.facturacionManager.cargarValoresProcedimientos(listaProcedimientos);
+      
+      this.facturaData = this.facturacionManager.prepararFacturaDocumento(listaProcedimientos);
+      console.log('Datos para facturación por documento:', this.facturaData);
+      
+      this.requestUpdate();
+    } catch (error) {
+      this.error = error.message;
+    } finally {
+      this.cargandoValores = false;
     }
+  };
 
-    this.cargando = true;
-    this.error = '';
-    this.data = null;
+  resetearEstadoFacturacion() {
     this.contratoSeleccionado = '';
     this.valoresProcedimientos = {};
     this.fkUsuario = '';
     this.fkUsuarioHistoria = '';
     this.procedimientosAgregados = [];
     this.facturaData = null;
-
-    try {
-      const resp = await fetch(`/roberto/jsoncompleto?numeroDocumento=${encodeURIComponent(this.numeroDocumento)}`);
-      const json = await resp.json();
-      if (!json.ok) throw new Error();
-      this.data = json;
-    } catch {
-      this.error = 'No se pudo consultar el paciente';
-    } finally {
-      this.cargando = false;
-    }
-  }
-
-  // ----------------------------
-  // 🔹 Preparar datos de factura
-  // ----------------------------
-  prepararFactura(listaProcedimientos) {
-    const historia = this.data?.resultadoCompleto?.[0]?.historia;
-    if (!historia || !this.contratoSeleccionado) return;
-
-    const procedimientosFacturar = listaProcedimientos.map(p => ({
-      fk_procedimiento: p.fk_procedimiento,
-      valor_unitario: this.valoresProcedimientos[p.fk_procedimiento] || 0,
-      fk_usuario: this.fkUsuario || historia.fk_usuario,
-      IdServicio: 706 // siempre fijo
-    }));
-
-    this.facturaData = {
-      fk_entidad: historia.fk_entidad,
-      fk_paciente: historia.fk_paciente,
-      fk_contrato_entidad: this.contratoSeleccionado,
-      procedimientos: procedimientosFacturar,
-      FacturadorId: this.facturadorId // 🔹 enviamos ID del facturador
-    };
-
-    this.requestUpdate();
+    this.admisionManual = '';
+    this.cargandoValores = false;
   }
 }
 

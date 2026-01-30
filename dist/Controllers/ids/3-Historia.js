@@ -63,12 +63,42 @@ const historia = async (req, res) => {
                 codigo: data.fk_procedimiento_soat
             });
         }
+        // ======== BUSCAR FK_USUARIO VÁLIDO IGNORANDO EL PRIMERO Y NULL ========
+        let primerEncontrado = false;
+        function buscarFkUsuario(obj) {
+            if (typeof obj !== "object" || obj === null)
+                return undefined;
+            for (const key in obj) {
+                if (!obj.hasOwnProperty(key))
+                    continue;
+                const value = obj[key];
+                if (key === "fk_usuario") {
+                    if (!primerEncontrado) {
+                        // Ignoramos el primer fk_usuario, aunque sea válido o no
+                        primerEncontrado = true;
+                    }
+                    else if (value !== null) {
+                        // Retornamos el primer fk_usuario válido después del primero
+                        return value;
+                    }
+                }
+                // Si el valor es un objeto o array, buscar recursivamente
+                if (typeof value === "object") {
+                    const resultado = buscarFkUsuario(value);
+                    if (resultado !== undefined)
+                        return resultado;
+                }
+            }
+            return undefined; // si no se encontró ninguno válido después del primero
+        }
+        const fk_usuario = buscarFkUsuario(data);
+        // =====================================
         // Respuesta filtrada con SOLO los campos solicitados
         const historiaFiltrada = {
             fk_entidad: data.facturacion_admisiones?.fk_entidad,
             fk_paciente: data.facturacion_admisiones?.fk_paciente,
             fk_contrato_entidad: data.facturacion_admisiones?.fk_contrato_entidad,
-            fk_usuario: data.facturacion_admisiones?.fk_usuario,
+            fk_usuario, // buscado en todo el JSON ignorando el primero y null
             fk_admision: data.fk_admision,
             numero_admision: data.facturacion_admisiones?.numero_admision,
             fecha_admision: data.facturacion_admisiones?.fecha_admision,

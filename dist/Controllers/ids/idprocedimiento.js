@@ -3,41 +3,51 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.idProcedimiento = void 0;
+exports.BuscarProdecidento = void 0;
 const axios_1 = __importDefault(require("axios"));
-const idProcedimiento = async (req, res) => {
+const BuscarProdecidento = async (req, res) => {
     try {
-        const { nombreProcedimiento } = req.query;
-        if (!nombreProcedimiento) {
-            return res.status(400).json({
-                message: "El parámetro nombreProcedimiento es obligatorio",
-            });
+        const { id_historia_clinica } = req.query;
+        if (!id_historia_clinica) {
+            return res.status(400).json({ message: "id_historia_clinica requerido" });
         }
-        const response = await axios_1.default.get("https://balance.saludplus.co/procedimientos/ProcedimientosBuscarNombre", {
-            params: {
-                nombreProcedimiento,
-                capitulos: "",
-                _: Date.now(),
-            },
+        const url = "https://balance.saludplus.co/historiaClinicaUnificada/BucardorHistoriaProcedimientosDiagnosticosDetalle";
+        const response = await axios_1.default.post(url, {
+            accion: "TRAE",
+            id_historia_clinica: Number(id_historia_clinica),
+        }, {
             headers: {
-                "X-Requested-With": "XMLHttpRequest",
-                "data": "AQSl6hWJhjPIqRE5FVxQEj2m+tBylqGIYr3XszOGeF8=.1SS9/UCeyjpq9PyT8MBqPg==.wcFkBNOeMUO3EbN8I4nUXw==",
+                "Content-Type": "application/json",
+                data: "AQSl6hWJhjPIqRE5FVxQEj2m+tBylqGIYr3XszOGeF8=.1SS9/UCeyjpq9PyT8MBqPg==.wcFkBNOeMUO3EbN8I4nUXw==",
             },
+            responseType: "text",
         });
-        // Filtrar solo los que coincidan exactamente con el código inicial
-        const procedimientosFiltrados = response.data
-            .filter((p) => p.text.startsWith(nombreProcedimiento))
-            .map((p) => ({
-            id_procedimiento: p.id,
-            IdServicio: p.IdServicio,
-        }));
-        return res.status(200).json(procedimientosFiltrados);
+        const html = response.data;
+        // 🔎 REGEX PARA EXTRAER CUP + NOMBRE
+        // ejemplo: '903895 - GLUCOSA EN SUERO'
+        const regex = /(\d{6})\s*-\s*([^<\r\n]+)/g;
+        const procedimientos = [];
+        const vistos = new Set();
+        let match;
+        while ((match = regex.exec(html)) !== null) {
+            const cup = match[1];
+            const nombre = match[2].trim();
+            const key = cup + nombre;
+            if (!vistos.has(key)) {
+                vistos.add(key);
+                procedimientos.push({ cup, nombre });
+            }
+        }
+        return res.json({
+            total: procedimientos.length,
+            procedimientos,
+        });
     }
     catch (error) {
         return res.status(500).json({
-            message: "Error consultando procedimientos",
+            message: "Error procesando procedimientos",
             error: error.message,
         });
     }
 };
-exports.idProcedimiento = idProcedimiento;
+exports.BuscarProdecidento = BuscarProdecidento;
