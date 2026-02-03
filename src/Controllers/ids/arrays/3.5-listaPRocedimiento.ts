@@ -38,8 +38,11 @@ export const procedimientosDB = [
   { id: 9542, cups: "906225", nombre: "Hepatitis C, ANTICUERPO [ANTI-HVC] & *+" },
   { id: 9918, cups: "907106", nombre: "UROANALISIS CON SEDIMENTO Y DENSIDAD URINARIA" },
   { id: 10126, cups: "911015", nombre: "HEMOCLASIFICACION FACTOR Rh [FACTOR D] POR MICROTECNICA" },
-  { id: 10128, cups: "911017", nombre: "HEMOCLASIFICACION GRUPO ABO, DIRECTA O GLOBULAR POR MICROTÉCNICA" }
-  		
+  { id: 10128, cups: "911017", nombre: "HEMOCLASIFICACION GRUPO ABO, DIRECTA O GLOBULAR POR MICROTÉCNICA" },
+  { id: 8893, cups: "902206", nombre: "EXTENDIDO DE SANGRE PERIFERICA, ESTUDIO DE MORFOLOGIA" },
+  { id: 9525, cups: "906208", nombre: "Dengue, ANTICUERPOS Ig M" },
+  				
+
 ];
 
 export const listaPRocedimiento = async (req: Request, res: Response) => {
