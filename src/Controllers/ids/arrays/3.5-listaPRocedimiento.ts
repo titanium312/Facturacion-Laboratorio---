@@ -41,8 +41,11 @@ export const procedimientosDB = [
   { id: 10128, cups: "911017", nombre: "HEMOCLASIFICACION GRUPO ABO, DIRECTA O GLOBULAR POR MICROTÉCNICA" },
   { id: 8893, cups: "902206", nombre: "EXTENDIDO DE SANGRE PERIFERICA, ESTUDIO DE MORFOLOGIA" },
   { id: 9525, cups: "906208", nombre: "Dengue, ANTICUERPOS Ig M" },
-  				
-
+  { id: 8891, cups: "902204", nombre: "ERITROSEDIMENTACION [VELOCIDAD SEDIMENTACION GLOBULAR - VSG" },				
+	{ id: 9120, cups: "903842", nombre: "GLUCOSA PRE Y POST CARGA DE GLUCOSA" },	
+  { id: 9147, cups: "903869", nombre: "UREA" },		
+		
+		
 ];
 
 export const listaPRocedimiento = async (req: Request, res: Response) => {
