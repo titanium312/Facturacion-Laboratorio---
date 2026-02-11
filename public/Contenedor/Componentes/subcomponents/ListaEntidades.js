@@ -92,7 +92,8 @@ export class ListaEntidades extends LitElement {
   async cargarEntidades() {
     this.cargando = true;
     try {
-      const res = await fetch('http://localhost:3000/roberto/ListaEntidadesEps');
+   const res = await fetch('/roberto/ListaEntidadesEps');
+
       this.entidades = await res.json();
       this.entidadesFiltradas = this.entidades;
       
