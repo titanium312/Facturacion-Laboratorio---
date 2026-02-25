@@ -1,199 +1,202 @@
-import { LitElement, html, css } from 'https://unpkg.com/lit@2.7.5?module';
+import { LitElement, html, css } from "lit";
+import { customElement, state } from "lit/decorators.js";
 
-export class ListaEntidades extends LitElement {
-  static properties = {
-    entidades: { state: true },
-    filtro: { state: true },
-    fk_entidad: { type: String },
-    entidadesFiltradas: { state: true },
-    cargando: { state: true }
-  };
-
+/**
+ * Componente profesional para gestión de archivos Excel
+ */
+@customElement("componente2-app")
+export class Componente2App extends LitElement {
+  
   static styles = css`
     :host {
       display: block;
-      font-family: Arial, sans-serif;
-      max-width: 400px;
-      position: relative;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      color: #2d3748;
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 2.5rem;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+      border: 1px solid #f0f0f0;
     }
-    .search-container {
-      position: relative;
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid #edf2f7;
     }
-    input {
-      width: 100%;
-      padding: 8px 30px 8px 8px;
-      box-sizing: border-box;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      font-size: 14px;
-    }
-    .clear-btn {
-      position: absolute;
-      right: 8px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: transparent;
-      border: none;
-      cursor: pointer;
-      font-size: 16px;
-      color: #888;
-    }
-    .clear-btn:hover {
-      color: #555;
-    }
-    ul {
-      list-style: none;
+
+    h1 {
+      font-size: 1.4rem;
+      font-weight: 600;
       margin: 0;
-      padding: 0;
-      border: 1px solid #ccc;
-      border-top: none;
-      max-height: 200px;
-      overflow-y: auto;
-      position: absolute;
-      width: 100%;
-      background: white;
-      z-index: 1000;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      border-radius: 0 0 4px 4px;
+      color: #1a202c;
+      letter-spacing: -0.025em;
     }
-    li {
-      padding: 8px;
+
+    .button-group {
+      display: flex;
+      gap: 12px;
+    }
+
+    button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
       cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid transparent;
     }
-    li:hover {
-      background-color: #f0f0f0;
+
+    .btn-primary {
+      background: #1a202c;
+      color: white;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
-    .selected {
-      background-color: #e0f7fa;
+
+    .btn-primary:hover {
+      background: #2d3748;
+      transform: translateY(-1px);
+    }
+
+    .btn-outline {
+      background: white;
+      border-color: #e2e8f0;
+      color: #4a5568;
+    }
+
+    .btn-outline:hover {
+      background: #f8fafc;
+      border-color: #cbd5e0;
+    }
+
+    .status-bar {
+      margin-top: 1rem;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .status-success { 
+      background: #f0fdf4; 
+      color: #166534; 
+      border: 1px solid #bbf7d0; 
+    }
+
+    .status-error {
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    .data-preview {
+      margin-top: 1.5rem;
+      background: #f8fafc;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      overflow: hidden;
+    }
+
+    pre {
+      margin: 0;
+      padding: 1.5rem;
+      max-height: 450px;
+      overflow: auto;
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #334155;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: #94a3b8;
+      border: 2px dashed #e2e8f0;
+      border-radius: 12px;
+      background: #fcfcfc;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-5px); }
+      to { opacity: 1; transform: translateY(0); }
     }
   `;
 
-  constructor() {
-    super();
-    this.entidades = [];
-    this.filtro = '';
-    this.fk_entidad = '';
-    this.entidadesFiltradas = [];
-    this.cargando = false;
-  }
+  @state() datos = null;
+  @state() mensaje = "";
 
-  connectedCallback() {
-    super.connectedCallback();
-    this.cargarEntidades();
-  }
-
-  // 🔹 Observa cambios en fk_entidad para auto-seleccionar
-  updated(changedProperties) {
-    if (changedProperties.has('fk_entidad') && this.fk_entidad) {
-      this.autoSeleccionarEntidad();
-    }
-  }
-
-  async cargarEntidades() {
-    this.cargando = true;
+  async extraerExcel() {
     try {
-   const res = await fetch('/roberto/ListaEntidadesEps');
-
-      this.entidades = await res.json();
-      this.entidadesFiltradas = this.entidades;
-      
-      // Si ya tenemos fk_entidad, seleccionarla
-      if (this.fk_entidad) {
-        this.autoSeleccionarEntidad();
+      const resultado = await window.marinoAPI.extraerExcel();
+      if (resultado) {
+        this.datos = resultado;
+        this.mensaje = "✓ Archivo cargado correctamente.";
       }
-    } catch (err) {
-      console.error('Error cargando entidades', err);
-    } finally {
-      this.cargando = false;
+    } catch (error) {
+      this.mensaje = "✕ Error al cargar el archivo.";
     }
   }
 
-  autoSeleccionarEntidad() {
-    if (!this.fk_entidad || this.entidades.length === 0) return;
+  async guardarEnCarpeta() {
+    if (!this.datos) return;
     
-    const entidadEncontrada = this.entidades.find(
-      ent => String(ent.id) === String(this.fk_entidad)
-    );
-    
-    if (entidadEncontrada) {
-      this.filtro = entidadEncontrada.nombre;
-      this.entidadesFiltradas = [];
+    try {
+      // marinoAPI debe gestionar el diálogo nativo de guardar
+      const resultado = await window.marinoAPI.guardarExcel(this.datos);
       
-      // Dispara evento para informar al padre
-      this.dispatchEvent(new CustomEvent('entidad-seleccionada', {
-        detail: { fk_entidad: this.fk_entidad },
-        bubbles: true,
-        composed: true
-      }));
+      if (resultado.success) {
+        this.mensaje = `✓ Guardado en: ${resultado.path}`;
+      } else {
+        this.mensaje = "Información: El guardado fue cancelado.";
+      }
+    } catch (error) {
+      this.mensaje = "✕ Error al intentar guardar el archivo.";
     }
-  }
-
-  actualizarFiltro(e) {
-    this.filtro = e.target.value;
-
-    if (this.filtro === '') {
-      // Si se limpia el filtro, también limpiamos selección
-      this.fk_entidad = '';
-      this.entidadesFiltradas = this.entidades;
-    } else {
-      this.entidadesFiltradas = this.entidades.filter(ent =>
-        ent.nombre.toLowerCase().includes(this.filtro.toLowerCase())
-      );
-    }
-  }
-
-  seleccionarEntidad(entidad) {
-    this.fk_entidad = String(entidad.id);
-    this.filtro = entidad.nombre;
-    this.entidadesFiltradas = []; // Cierra la lista al seleccionar
-
-    this.dispatchEvent(new CustomEvent('entidad-seleccionada', {
-      detail: { fk_entidad: this.fk_entidad },
-      bubbles: true,
-      composed: true
-    }));
-  }
-
-  limpiarSeleccion() {
-    this.filtro = '';
-    this.fk_entidad = '';
-    this.entidadesFiltradas = this.entidades;
-    
-    // Dispara evento para informar que se limpió
-    this.dispatchEvent(new CustomEvent('entidad-seleccionada', {
-      detail: { fk_entidad: '' },
-      bubbles: true,
-      composed: true
-    }));
   }
 
   render() {
     return html`
-      <div class="search-container">
-        <input
-          type="text"
-          placeholder="Buscar entidad..."
-          .value=${this.filtro}
-          @input=${this.actualizarFiltro}
-        />
-        ${this.filtro ? html`
-          <button class="clear-btn" @click=${this.limpiarSeleccion}>&times;</button>
-        ` : ''}
-        ${this.entidadesFiltradas.length > 0 ? html`
-          <ul>
-            ${this.entidadesFiltradas.map(ent => html`
-              <li
-                class=${String(ent.id) === this.fk_entidad ? 'selected' : ''}
-                @click=${() => this.seleccionarEntidad(ent)}
-              >
-                ${ent.nombre}
-              </li>
-            `)}
-          </ul>
-        ` : ''}
+      <div class="header">
+        <h1>Gestión de Datos</h1>
+        <div class="button-group">
+          <button class="btn-outline" @click=${this.extraerExcel}>
+            📂 Abrir Archivo
+          </button>
+          
+          ${this.datos ? html`
+            <button class="btn-primary" @click=${this.guardarEnCarpeta}>
+              💾 Guardar como...
+            </button>
+          ` : ""}
+        </div>
       </div>
+
+      ${this.mensaje ? html`
+        <div class="status-bar ${this.mensaje.includes('✕') ? 'status-error' : 'status-success'}">
+          ${this.mensaje}
+        </div>
+      ` : ""}
+
+      ${this.datos ? html`
+        <div class="data-preview">
+          <pre>${JSON.stringify(this.datos, null, 2)}</pre>
+        </div>
+      ` : html`
+        <div class="empty-state">
+          <p>No hay datos disponibles para mostrar.</p>
+          <small>Seleccione un archivo de Excel para iniciar el procesamiento.</small>
+        </div>
+      `}
     `;
   }
 }
-
-customElements.define('lista-entidades', ListaEntidades);

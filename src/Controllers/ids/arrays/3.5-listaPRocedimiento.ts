@@ -44,9 +44,8 @@ export const procedimientosDB = [
   { id: 8891, cups: "902204", nombre: "ERITROSEDIMENTACION [VELOCIDAD SEDIMENTACION GLOBULAR - VSG" },				
 	{ id: 9120, cups: "903842", nombre: "GLUCOSA PRE Y POST CARGA DE GLUCOSA" },	
   { id: 9147, cups: "903869", nombre: "UREA" },
-
-  
-
+  { id: 8893, cups: "902206", nombre: "EXTENDIDO DE SANGRE PERIFERICA, ESTUDIO DE MORFOLOGIA" },
+  { id: 9894, cups: "906915", nombre: "PRUEBA NO TREPONEMICA MANUAL" },
  
 ];
 
