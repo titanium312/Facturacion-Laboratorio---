@@ -1,202 +1,110 @@
-import { LitElement, html, css } from "lit";
-import { customElement, state } from "lit/decorators.js";
+import { LitElement, html, css } from 'https://unpkg.com/lit@2.7.5?module';
 
-/**
- * Componente profesional para gestión de archivos Excel
- */
-@customElement("componente2-app")
-export class Componente2App extends LitElement {
-  
+class ListaEntidades extends LitElement {
+  static properties = {
+    fk_entidad: { type: String },
+    entidades: { type: Array },
+    filtro: { type: String },
+    cargando: { type: Boolean }
+  };
+
   static styles = css`
-    :host {
-      display: block;
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      color: #2d3748;
-      max-width: 900px;
-      margin: 2rem auto;
-      padding: 2.5rem;
-      background: #ffffff;
-      border-radius: 16px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-      border: 1px solid #f0f0f0;
+    :host { 
+      display: block; 
+      margin-bottom: 15px; 
+      font-family: sans-serif;
     }
-
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 2rem;
-      padding-bottom: 1.5rem;
-      border-bottom: 1px solid #edf2f7;
+    .select-container { 
+      display: flex; 
+      flex-direction: column; 
+      gap: 5px; 
     }
-
-    h1 {
-      font-size: 1.4rem;
-      font-weight: 600;
-      margin: 0;
-      color: #1a202c;
-      letter-spacing: -0.025em;
-    }
-
-    .button-group {
-      display: flex;
-      gap: 12px;
-    }
-
-    button {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 20px;
-      border-radius: 8px;
+    select {
+      padding: 10px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
       font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      border: 1px solid transparent;
-    }
-
-    .btn-primary {
-      background: #1a202c;
-      color: white;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-
-    .btn-primary:hover {
-      background: #2d3748;
-      transform: translateY(-1px);
-    }
-
-    .btn-outline {
       background: white;
-      border-color: #e2e8f0;
-      color: #4a5568;
+      cursor: pointer;
     }
-
-    .btn-outline:hover {
-      background: #f8fafc;
-      border-color: #cbd5e0;
+    select:focus {
+      outline: none;
+      border-color: #4caf50;
+      box-shadow: 0 0 5px rgba(76, 175, 80, 0.2);
     }
-
-    .status-bar {
-      margin-top: 1rem;
-      padding: 12px 16px;
-      border-radius: 8px;
-      font-size: 13px;
-      animation: fadeIn 0.3s ease;
-    }
-
-    .status-success { 
-      background: #f0fdf4; 
-      color: #166534; 
-      border: 1px solid #bbf7d0; 
-    }
-
-    .status-error {
-      background: #fef2f2;
-      color: #991b1b;
-      border: 1px solid #fecaca;
-    }
-
-    .data-preview {
-      margin-top: 1.5rem;
-      background: #f8fafc;
-      border-radius: 12px;
-      border: 1px solid #e2e8f0;
-      overflow: hidden;
-    }
-
-    pre {
-      margin: 0;
-      padding: 1.5rem;
-      max-height: 450px;
-      overflow: auto;
-      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
-      font-size: 13px;
-      line-height: 1.6;
-      color: #334155;
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 4rem 2rem;
-      color: #94a3b8;
-      border: 2px dashed #e2e8f0;
-      border-radius: 12px;
-      background: #fcfcfc;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-5px); }
-      to { opacity: 1; transform: translateY(0); }
+    /* Corregido el error del linter aquí */
+    .loading { 
+      font-size: 12px; 
+      color: #666; 
+      font-style: italic; 
     }
   `;
 
-  @state() datos = null;
-  @state() mensaje = "";
+  constructor() {
+    super();
+    this.entidades = [];
+    this.fk_entidad = '';
+    this.cargando = false;
+    this.filtro = '';
+  }
 
-  async extraerExcel() {
+  firstUpdated() {
+    this.cargarEntidades();
+  }
+
+  async cargarEntidades() {
+    this.cargando = true;
     try {
-      const resultado = await window.marinoAPI.extraerExcel();
-      if (resultado) {
-        this.datos = resultado;
-        this.mensaje = "✓ Archivo cargado correctamente.";
-      }
-    } catch (error) {
-      this.mensaje = "✕ Error al cargar el archivo.";
+      // Simulación de delay de red
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Datos de ejemplo
+      this.entidades = [
+        { id: '1', nombre: 'SURamericana' },
+        { id: '2', nombre: 'Sanitas' },
+        { id: '3', nombre: 'Nueva EPS' },
+        { id: '4', nombre: 'Salud Total' },
+        { id: '5', nombre: 'Particular' }
+      ];
+    } catch (e) {
+      console.error("Error cargando entidades", e);
+    } finally {
+      this.cargando = false;
     }
   }
 
-  async guardarEnCarpeta() {
-    if (!this.datos) return;
-    
-    try {
-      // marinoAPI debe gestionar el diálogo nativo de guardar
-      const resultado = await window.marinoAPI.guardarExcel(this.datos);
-      
-      if (resultado.success) {
-        this.mensaje = `✓ Guardado en: ${resultado.path}`;
-      } else {
-        this.mensaje = "Información: El guardado fue cancelado.";
-      }
-    } catch (error) {
-      this.mensaje = "✕ Error al intentar guardar el archivo.";
-    }
+  _manejarCambio(e) {
+    const valor = e.target.value;
+    this.fk_entidad = valor;
+
+    // Disparar evento para BuscadorPaciente.js
+    this.dispatchEvent(new CustomEvent('entidad-seleccionada', {
+      detail: { fk_entidad: valor },
+      bubbles: true,
+      composed: true
+    }));
   }
 
   render() {
     return html`
-      <div class="header">
-        <h1>Gestión de Datos</h1>
-        <div class="button-group">
-          <button class="btn-outline" @click=${this.extraerExcel}>
-            📂 Abrir Archivo
-          </button>
-          
-          ${this.datos ? html`
-            <button class="btn-primary" @click=${this.guardarEnCarpeta}>
-              💾 Guardar como...
-            </button>
-          ` : ""}
-        </div>
+      <div class="select-container">
+        <label><strong>Hospital / Entidad (EPS):</strong></label>
+        
+        <select .value=${this.fk_entidad} @change=${this._manejarCambio}>
+          <option value="">-- Seleccione una entidad --</option>
+          ${this.entidades.map(ent => html`
+            <option 
+              value="${ent.id}" 
+              ?selected=${String(this.fk_entidad) === String(ent.id)}>
+              ${ent.nombre}
+            </option>
+          `)}
+        </select>
+
+        ${this.cargando ? html`<span class="loading">Cargando lista de convenios...</span>` : ''}
       </div>
-
-      ${this.mensaje ? html`
-        <div class="status-bar ${this.mensaje.includes('✕') ? 'status-error' : 'status-success'}">
-          ${this.mensaje}
-        </div>
-      ` : ""}
-
-      ${this.datos ? html`
-        <div class="data-preview">
-          <pre>${JSON.stringify(this.datos, null, 2)}</pre>
-        </div>
-      ` : html`
-        <div class="empty-state">
-          <p>No hay datos disponibles para mostrar.</p>
-          <small>Seleccione un archivo de Excel para iniciar el procesamiento.</small>
-        </div>
-      `}
     `;
   }
 }
+
+customElements.define('lista-entidades', ListaEntidades);

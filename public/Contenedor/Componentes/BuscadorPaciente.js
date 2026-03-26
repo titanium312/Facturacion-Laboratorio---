@@ -2,7 +2,7 @@ import { LitElement, html, css } from 'https://unpkg.com/lit@2.7.5?module';
 import './subcomponents/SelectorContrato.js';
 import './subcomponents/MedicoFiltro.js';
 import './subcomponents/LaboratorioProcedimientos.js';
-import './subcomponents/ListaEntidades.js';
+import './subcomponents/ListaEntidades.js'; 
 import './subcomponents/Facturar.js';
 import './subcomponents/LOOGUIN.js';
 
