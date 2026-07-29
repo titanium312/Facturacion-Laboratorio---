@@ -45,7 +45,7 @@ export const procedimientosDB = [
   { id: 9904, cups: "907008", nombre: "SANGRE OCULTA EN MATERIA FECAL [GUAYACO O EQUIVALENTE] +" },
   { id: 9918, cups: "907106", nombre: "UROANALISIS CON SEDIMENTO Y DENSIDAD URINARIA" },
   { id: 10126, cups: "911015", nombre: "HEMOCLASIFICACION FACTOR Rh [FACTOR D] POR MICROTECNICA" },
-  { id: 10128, cups: "911017", nombre: "HEMOCLASIFICACION GRUPO ABO, DIRECTA O GLOBULAR POR MICROTÉCNICA" },
+  { id: 10128, cups: "911017", nombre: "HEMOCLASIFICACION GRUPO ABO, DIRECTA O GLOBULAR POR MICROTÉCNICA" }
 ];
 
 export const listaProcedimientos = async (req: Request, res: Response) => {

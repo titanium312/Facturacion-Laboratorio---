@@ -69,28 +69,32 @@ class LoginComponent extends LitElement {
     this.error = '';
 
     try {
-      const response = await fetch('https://api.saludplus.co/api/auth/Login', {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'Content-Type': 'application/json',
-          // 'X-API-Key': 'TU_API_KEY_AQUI' // Descomenta y agrega si es necesaria
-        },
-        body: JSON.stringify({
-          username: this.username,
-          password: this.password
-        })
-      });
+      const response = await fetch(
+        'https://laboratorionuevomundo.vercel.app/-RB-/login',
+        {
+          method: 'POST',
+          headers: {
+            'accept': 'application/json',
+            'Content-Type': 'application/json',
+            'origin': 'https://laboratorionuevomundo.vercel.app'
+            // Si necesitas más headers, agrégalos aquí
+          },
+          body: JSON.stringify({
+            username: this.username,
+            password: this.password
+          })
+        }
+      );
 
       const data = await response.json();
 
       // Según tu JSON: evaluamos isSuccessful
       if (data.isSuccessful && data.result) {
-        // Mapeamos los datos de 'result' a lo que el padre (BuscadorPaciente) espera
+        // Mapeamos los datos de 'result' a lo que el padre espera
         const userInfo = {
           idFacturador: data.result.id,
           nombre: data.result.nombre,
-          token: data.result.token, // Opcional por si lo necesitas luego
+          token: data.result.token,
           iniciales: data.result.iniciales
         };
 
