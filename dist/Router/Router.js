@@ -1,31 +1,32 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const { enviarAdmisionesFacturas } = require("../Controllers/Subirfactura");
-const { jsoncompleto } = require("../Controllers/ids/1-jsoncompleto");
-const { historia } = require("../Controllers/ids/3-Historia");
-const { listaPRocedimiento } = require("../Controllers/ids/arrays/3.5-listaPRocedimiento");
-const { ListaEntidadesEps } = require("../Controllers/ids/arrays/ListaEntidadesEps");
-const { contratosValidos } = require("../Controllers/ids/4-Contrato");
-const { listaPreciosProcedimiento } = require("../Controllers/ids/valorProcedimiento");
-const { buscarPaciente } = require("../Controllers/ids/2-BuscarPacienteFactura");
-const { BuscarPacienteAdmicion } = require("../Controllers/ids/BuscarPacienteAdmicion");
-const { BuscarProdecidento } = require("../Controllers/ids/idprocedimiento");
-const { buscarFacturaSelectUsuarios } = require("../Controllers/ids/Profecional");
+const _1_jsoncompleto_1 = require("../Controllers/ids/1-jsoncompleto");
+const _3_Historia_1 = require("../Controllers/ids/3-Historia");
+const _3_5_listaPRocedimiento_1 = require("../Controllers/ids/arrays/3.5-listaPRocedimiento"); // ✅ Nombre correcto: listaProcedimientos
+const ListaEntidadesEps_1 = require("../Controllers/ids/arrays/ListaEntidadesEps");
+const _4_Contrato_1 = require("../Controllers/ids/4-Contrato");
+const valorProcedimiento_1 = require("../Controllers/ids/valorProcedimiento");
+const _2_BuscarPacienteFactura_1 = require("../Controllers/ids/2-BuscarPacienteFactura");
+const BuscarPacienteAdmicion_1 = require("../Controllers/ids/BuscarPacienteAdmicion");
+const idprocedimiento_1 = require("../Controllers/ids/idprocedimiento");
+const Profecional_1 = require("../Controllers/ids/Profecional");
+const Subirfactura_1 = require("../Controllers/Subirfactura");
 const router = (0, express_1.Router)();
-// Ruta simple
-router.get("/jsoncompleto", jsoncompleto);
-router.get("/buscarPaciente", buscarPaciente);
-router.get("/BuscarPacienteAdmicion", BuscarPacienteAdmicion);
-router.get("/historia", historia);
-router.get("/extrearProcedimiento", listaPRocedimiento);
-router.get("/ListaEntidadesEps", ListaEntidadesEps);
-router.get("/BuscarProdecidento", BuscarProdecidento);
-router.get("/contratos-validos", contratosValidos);
-router.get("/valorPRocedimiento", listaPreciosProcedimiento);
-router.post("/profecional", buscarFacturaSelectUsuarios);
-// Subir Factura
-router.post("/subir", enviarAdmisionesFacturas);
+// Rutas GET
+router.get("/jsoncompleto", _1_jsoncompleto_1.jsoncompleto);
+router.get("/buscarPaciente", _2_BuscarPacienteFactura_1.buscarPaciente);
+router.get("/BuscarPacienteAdmicion", BuscarPacienteAdmicion_1.BuscarPacienteAdmicion);
+router.get("/historia", _3_Historia_1.historia);
+router.get("/extrearProcedimiento", _3_5_listaPRocedimiento_1.listaProcedimientos); // ✅ Nombre corregido
+router.get("/ListaEntidadesEps", ListaEntidadesEps_1.ListaEntidadesEps);
+router.get("/BuscarProdecidento", idprocedimiento_1.BuscarProdecidento);
+router.get("/contratos-validos", _4_Contrato_1.contratosValidos);
+router.get("/valorPRocedimiento", valorProcedimiento_1.listaPreciosProcedimiento);
+// Rutas POST
+router.post("/profecional", Profecional_1.buscarFacturaSelectUsuarios);
+router.post("/subir", Subirfactura_1.enviarAdmisionesFacturas);
+// Ruta de prueba
 router.get("/test", (req, res) => {
     res.json({ ok: true });
 });
