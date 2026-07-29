@@ -68,23 +68,38 @@ export class FacturacionManager {
     }));
   }
 
+  /**
+   * Obtiene el valor de un procedimiento para el contrato seleccionado.
+   * @param {number|string} idProcedimiento - ID del procedimiento.
+   * @returns {Promise<number>} Valor total del procedimiento.
+   */
   async cargarValorProcedimiento(idProcedimiento) {
     if (!this.component.contratoSeleccionado || !idProcedimiento) {
       return 0;
     }
 
     try {
-      const resp = await fetch(
-        `/roberto/valorPRocedimiento?idContrato=${encodeURIComponent(this.component.contratoSeleccionado)}&idProcedimiento=${encodeURIComponent(idProcedimiento)}`
-      );
-      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      // Construcción correcta de la URL con parámetros
+      const url = new URL('/Roberto/valorPRocedimiento', window.location.origin);
+      url.searchParams.append('idContrato', this.component.contratoSeleccionado);
+      url.searchParams.append('idProcedimiento', idProcedimiento);
+
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
       const json = await resp.json();
-      return json.valor ?? 0;
-    } catch {
+      // El endpoint devuelve "valorTotal" (según el curl)
+      return json.valorTotal ?? json.valor ?? 0;
+    } catch (error) {
+      console.error(`Error al cargar valor del procedimiento ${idProcedimiento}:`, error);
       return 0;
     }
   }
 
+  /**
+   * Carga los valores de todos los procedimientos en lote.
+   * @param {Array} listaProcedimientos - Lista de procedimientos con al menos `fk_procedimiento`.
+   */
   async cargarValoresProcedimientos(listaProcedimientos) {
     if (!this.component.contratoSeleccionado) return;
 
@@ -92,13 +107,14 @@ export class FacturacionManager {
     const promesas = [];
 
     for (const p of listaProcedimientos) {
-      if (!p.fk_procedimiento) continue;
-      if (nuevosValores[p.fk_procedimiento] !== undefined) continue;
+      const id = p.fk_procedimiento;
+      if (!id) continue;
+      if (nuevosValores[id] !== undefined) continue; // Ya cargado
 
       promesas.push(
-        this.cargarValorProcedimiento(p.fk_procedimiento)
+        this.cargarValorProcedimiento(id)
           .then(valor => {
-            nuevosValores[p.fk_procedimiento] = valor;
+            nuevosValores[id] = valor;
           })
       );
     }

@@ -5,43 +5,53 @@ class MiPrincipal extends LitElement {
 
   static styles = css`
     :host {
+      display: block;
+      min-height: 100vh;
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      
+      /* Fondo elegante con degradado suave y sutil */
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      color: #1e293b;
+      
+      /* Centrado del contenido principal */
       display: flex;
       justify-content: center;
       align-items: flex-start;
-      min-height: 100vh;
-      background: linear-gradient(135deg, #f5f7fa, #e4ebf5);
-      font-family: 'Segoe UI', Roboto, Arial, sans-serif;
       padding: 40px 20px;
-      box-sizing: border-box;
     }
 
     .contenedor {
-      background: #ffffff;
       width: 100%;
-      max-width: 720px;
+      margin: 0; /* Sin márgenes externos innecesarios */
       padding: 32px;
-      border-radius: 14px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      
+      /* Tarjeta flotante con efecto cristal / sombra elegante */
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 16px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+      border: 1px solid rgba(226, 232, 240, 0.8);
+      
+      text-align: center; /* Alineación y centrado del texto */
     }
 
     h1 {
-      margin: 0 0 12px 0;
-      color: #1976d2;
-      font-size: 1.9rem;
-      font-weight: 600;
-      text-align: center;
+      margin: 0 0 8px 0;
+      font-size: 2rem;
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: -0.025em;
     }
 
     p {
       margin: 0 0 28px 0;
-      text-align: center;
-      color: #555;
-      font-size: 0.95rem;
+      font-size: 1rem;
+      color: #64748b;
     }
 
     buscador-paciente {
+      text-align: left; /* Restaura alineación a la izquierda para el buscador si es necesario */
       display: block;
-      margin-top: 10px;
     }
   `;
 

@@ -16,5 +16,5 @@ app.get("/", (req, res) => {
 });
 app.use("/Roberto", Router_1.default);
 app.listen(PORT, () => {
-    console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
+    console.log(`🚀 Servidor corriendo en  http://localhost:${PORT}`);
 });

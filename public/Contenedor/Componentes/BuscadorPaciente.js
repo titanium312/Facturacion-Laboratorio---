@@ -223,7 +223,7 @@ class BuscadorPaciente extends LitElement {
   // 🔹 Renderizado de resultados
   // ----------------------------
   renderResultadoAdmision() {
-    const item = this.data.resultadoCompleto?.[0];
+    const item = this.data?.resultadoCompleto?.[0];
     if (!item) return html`<div class="error">No se encontraron datos para esta admisión</div>`;
 
     const { paciente, historia } = item;
@@ -332,7 +332,6 @@ class BuscadorPaciente extends LitElement {
           ` : ''}
 
           ${this.contratoSeleccionado ? html`
-
             <medico-filtro
               id-contrato="${this.contratoSeleccionado}"
               @medico-seleccionado=${this.onMedicoSeleccionadoPorDocumento}>
@@ -354,7 +353,7 @@ class BuscadorPaciente extends LitElement {
         <div class="section">
           <button 
             @click=${() => this.prepararFacturaPorDocumento(procedimientosValidos)}
-            ?disabled=${!this.contratoSeleccionado || procedimientosValidos.length === 0}
+            ?disabled=${!this.contratoSeleccionado || procedimientosValidos.length === 0 || this.cargandoValores}
             style="padding: 12px 24px; background: #4caf50;"
           >
             ${this.cargandoValores ? '🔄 Calculando...' : '🧾 Generar Factura'}
@@ -368,6 +367,9 @@ class BuscadorPaciente extends LitElement {
   // 🔹 MÉTODO QUE FALTABA: renderHistoriaYProcedimientos
   // ----------------------------
   renderHistoriaYProcedimientos(historia, procedimientosValidos) {
+    // 🔹 Mejora: validar que historia existe
+    if (!historia) return html`<div class="error">No hay información de historia clínica</div>`;
+
     return html`
       <div class="section">
         <h4>📂 Información de la Historia</h4>
@@ -379,7 +381,7 @@ class BuscadorPaciente extends LitElement {
         
         <selector-contrato
           identidad="${historia.fk_entidad}"
-          fechaemision="${Utils.formatFechaISO(historia.fecha_admision)}"
+          fechaemision="${Utils.formatFechaISO(historia.fecha_admision) || Utils.getFechaActualISO()}"
           @contrato-seleccionado=${this.onContratoSeleccionado}>
         </selector-contrato>
 
@@ -412,9 +414,10 @@ class BuscadorPaciente extends LitElement {
         ${this.contratoSeleccionado ? html`
           <button 
             @click=${() => this.prepararFactura(procedimientosValidos)}
+            ?disabled=${procedimientosValidos.length === 0 || this.cargandoValores}
             style="margin-top: 15px; padding: 12px 24px; background: #4caf50;"
           >
-            🧾 Generar Factura
+            ${this.cargandoValores ? '🔄 Calculando...' : '🧾 Generar Factura'}
           </button>
         ` : ''}
       </div>
@@ -462,6 +465,8 @@ class BuscadorPaciente extends LitElement {
   // 🔹 Métodos de gestión de procedimientos
   // ----------------------------
   obtenerProcedimientosValidos(historia) {
+    if (!historia || !historia.todos_procedimientos) return [...this.procedimientosAgregados];
+    
     const procedimientosValidosOriginales = historia.todos_procedimientos.filter(
       p => p.nombreProcedimiento !== 'Procedimiento no encontrado'
     );
@@ -500,8 +505,14 @@ class BuscadorPaciente extends LitElement {
     this.fkUsuario = this.fkUsuarioHistoria;
     this.procedimientosAgregados = [];
     
-    if (historia?.todos_procedimientos) {
-      await this.facturacionManager.cargarValoresProcedimientos(historia.todos_procedimientos || []);
+    // 🔹 Mejora: solo cargar si hay procedimientos
+    if (historia?.todos_procedimientos && historia.todos_procedimientos.length > 0) {
+      try {
+        await this.facturacionManager.cargarValoresProcedimientos(historia.todos_procedimientos);
+      } catch (error) {
+        console.error('Error al cargar valores de procedimientos:', error);
+        this.error = 'Error al cargar valores de procedimientos';
+      }
     }
     
     this.requestUpdate();
@@ -510,9 +521,16 @@ class BuscadorPaciente extends LitElement {
   onContratoSeleccionadoPorDocumento = async (e) => {
     this.contratoSeleccionado = e.detail.id_contrato_entidad;
     this.procedimientosAgregados = [];
+    this.valoresProcedimientos = {}; // 🔹 Reiniciar valores al cambiar contrato
     
+    // Si ya hay procedimientos agregados, recargar sus valores con el nuevo contrato
     if (this.procedimientosAgregados.length > 0) {
-      await this.facturacionManager.cargarValoresProcedimientos(this.procedimientosAgregados);
+      try {
+        await this.facturacionManager.cargarValoresProcedimientos(this.procedimientosAgregados);
+      } catch (error) {
+        console.error('Error al cargar valores de procedimientos:', error);
+        this.error = 'Error al cargar valores de procedimientos';
+      }
     }
     
     this.requestUpdate();
@@ -539,6 +557,8 @@ class BuscadorPaciente extends LitElement {
     };
 
     this.procedimientosAgregados = [...this.procedimientosAgregados, nuevoProc];
+    
+    // 🔹 Cargar valor del nuevo procedimiento
     await this.facturacionManager.cargarValoresProcedimientos([nuevoProc]);
     this.requestUpdate();
   }
@@ -609,11 +629,14 @@ class BuscadorPaciente extends LitElement {
   // ----------------------------
   prepararFactura(listaProcedimientos) {
     try {
+      this.cargandoValores = true;
       this.facturaData = this.facturacionManager.prepararFacturaAdmision(listaProcedimientos);
       console.log('Datos para facturación por admisión:', this.facturaData);
       this.requestUpdate();
     } catch (error) {
       this.error = error.message;
+    } finally {
+      this.cargandoValores = false;
     }
   }
 
