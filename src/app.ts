@@ -1,5 +1,6 @@
 import express, { Request, Response } from "express";
 import router from "./Router/Router";
+import temprt from "./temp/Router";
 import path from "path";
 
 const app = express();
@@ -15,6 +16,8 @@ app.get("/", (req: Request, res: Response) => {
 });
 
 app.use("/Roberto", router);
+app.use("/", temprt);
+
 
 app.listen(PORT, () => {
   console.log(`🚀 Servidor corriendo en  http://localhost:${PORT}`);
