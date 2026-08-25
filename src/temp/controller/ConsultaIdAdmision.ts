@@ -62,13 +62,17 @@ async function generarHistoriaClinicaLogic(clave: string): Promise<any> {
   const idsStub = { id_admision: null, numeroFactura: clave, tipoDocumento: 'CC', numero_documento: clave };
   const ctx = construirContextoRenombramiento(idsStub, resolvedAdmisionId, INSTITUCION_ID);
 
+  // 🔹 Cambio 1: Módulo corregido
   const reporte = 'ListadoHistoriasClinicasDetallado3';
-  const modulo = 'Asistencial';
-  const FECHA_INICIAL_FIJA = '01/01/2023';
-  const FECHA_FINAL_HOY = formatDateDDMMYYYY(new Date());
+  const modulo = 'HistoriasClinicas';  // ← Cambiado de 'Asistencial' a 'HistoriasClinicas'
+
+  // 🔹 Ya no necesitamos estas constantes
+  // const FECHA_INICIAL_FIJA = '01/01/2023';
+  // const FECHA_FINAL_HOY = formatDateDDMMYYYY(new Date());
 
   const tokenReporte = createToken(reporte, INSTITUCION_ID, 83, USER_ID);
 
+  // 🔹 Cambio 2: Eliminar fechaInicial y fechaFinal de los parámetros
   const urlParams = new URLSearchParams({
     modulo,
     reporte,
@@ -78,11 +82,12 @@ async function generarHistoriaClinicaLogic(clave: string): Promise<any> {
     userId: String(USER_ID),
     idsHistorias: idHistoria,
     token: tokenReporte,
-    fechaInicial: FECHA_INICIAL_FIJA,
-    fechaFinal: FECHA_FINAL_HOY,
+    // fechaInicial: FECHA_INICIAL_FIJA,  // ← Eliminado
+    // fechaFinal: FECHA_FINAL_HOY,       // ← Eliminado
   });
 
-  const url = `https://reportes.saludplus.co/view.aspx?${urlParams.toString()}`;
+  // 🔹 Cambio 3: URL con /View.aspx (V mayúscula)
+  const url = `https://reportes.saludplus.co/View.aspx?${urlParams.toString()}`;
   const nombrepdf = generarNombreArchivo(ctx);
 
   return {
