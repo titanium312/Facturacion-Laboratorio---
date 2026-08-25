@@ -14,7 +14,7 @@ type HistoriaFila = [
   string, // 6: ingreso
   string, // 7: estado
   string, // 8: idAdmision
-  string  // 9: documento (solo números)
+  string  // 9: documento (solo números) → NÚMERO DE ADMISIÓN
 ];
 
 interface ApiRespuestaHistorias {
@@ -35,7 +35,7 @@ export const consultarIdHistoria = async (
   const docString = documento.toString().trim();
   const docLimpio = docString.replace(/[^0-9]/g, '');
 
-  // ---------- TOKENS ----------
+  // ---------- TOKENS (mantener igual) ----------
   const JWT_TOKEN =
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoiUmJhcnJldG8iLCJqdGkiOiJhNTA2ODYwMS1jNDQxLTQ2ODktODk5MS00MGJiNWI3ZDQyM2MiLCJ1c2VybmFtZSI6IlJiYXJyZXRvIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvZW1haWxhZGRyZXNzIjoicmIucm9iZXJ0by5iYXJyZXRvQGdtYWlsLmNvbSIsImFkbWluIjoiTiIsInVzZXJpZCI6IjY4NzQiLCJpbnN0aXR1dGlvbiI6IjIwIiwicGFnb3MiOiIwIiwidmVyc2lvbiI6IjEuMC4wLjAiLCJlbnZpcm9ubWVudCI6IlByb2R1Y3Rpb24iLCJleHAiOjE3ODc2MTEzNDgsImlzcyI6InRlZ2V0dC5sb2dpbiIsImF1ZCI6InRlZ2V0dC5jb20ifQ.olr3bBbRXCVV_KCLDrBEDJOy7nOJwPX2OU5pa9hhP1A';
 
@@ -156,11 +156,14 @@ export const consultarIdHistoria = async (
 
       const { aaData } = response.data;
       if (aaData?.length) {
+        // ============================================================
+        // 🔥 MODIFICACIÓN: SOLO SE COMPARA LA COLUMNA 9 (índice 9)
+        // que contiene el número de admisión/documento numérico.
+        // Se eliminan las comparaciones con las columnas 1 y 2.
+        // ============================================================
         const encontrado = aaData.find((fila) => {
-          const docCol1 = fila[1]?.replace(/[^0-9]/g, '') || '';
-          const docCol2 = fila[2]?.replace(/[^0-9]/g, '') || '';
           const docCol9 = fila[9]?.replace(/[^0-9]/g, '') || '';
-          return docCol1 === docLimpio || docCol2 === docLimpio || docCol9 === docLimpio;
+          return docCol9 === docLimpio;
         });
 
         if (encontrado) {
