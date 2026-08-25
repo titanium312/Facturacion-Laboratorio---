@@ -6,7 +6,7 @@ import { consultarIdHistoria } from './historia'; // importa función pura
 // ---------- Constantes fijas ----------
 const INSTITUCION_ID = 20;
 const USER_ID = 6874;
-const NIT_FIJO = 'NIT_DEFECTO';
+const NIT_FIJO = 'NIT_812001219';
 
 // ---------- Funciones internas (helpers, createToken, etc.) ----------
 function createToken(reportName: string, institucionId: number, idCaracteristica: number, userId: number): string {
