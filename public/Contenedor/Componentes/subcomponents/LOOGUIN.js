@@ -2,7 +2,7 @@ import { LitElement, html, css } from 'https://unpkg.com/lit@2.7.5?module';
 
 class LoginComponent extends LitElement {
   static properties = {
-    email: { type: String },
+    username: { type: String },
     password: { type: String },
     error: { type: String },
     loading: { type: Boolean },
@@ -10,7 +10,7 @@ class LoginComponent extends LitElement {
 
   constructor() {
     super();
-    this.email = '';
+    this.username = '';
     this.password = '';
     this.error = '';
     this.loading = false;
@@ -100,7 +100,7 @@ class LoginComponent extends LitElement {
     e.preventDefault();
     this.error = '';
 
-    if (!this.email || !this.password) {
+    if (!this.username || !this.password) {
       this.error = 'Por favor completa todos los campos';
       return;
     }
@@ -115,12 +115,12 @@ class LoginComponent extends LitElement {
       await new Promise((resolve) => setTimeout(resolve, 1200));
 
       this.dispatchEvent(new CustomEvent('login-success', {
-        detail: { email: this.email },
+        detail: { username: this.username },
         bubbles: true,
         composed: true,
       }));
     } catch (err) {
-      this.error = 'Credenciales inválidas. Intenta de nuevo.';
+      this.error = 'Usuario o contraseña incorrectos.';
     } finally {
       this.loading = false;
     }
@@ -138,15 +138,15 @@ class LoginComponent extends LitElement {
             ${this.error ? html`<div class="error">${this.error}</div>` : ''}
             <form @submit=${this.handleSubmit}>
               <div class="field">
-                <label for="email">Correo electrónico</label>
+                <label for="username">Usuario</label>
                 <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  .value=${this.email}
+                  id="username"
+                  name="username"
+                  type="text"
+                  .value=${this.username}
                   @input=${this.handleInput}
-                  placeholder="tu@correo.com"
-                  autocomplete="email"
+                  placeholder="Tu usuario"
+                  autocomplete="username"
                 />
               </div>
               <div class="field">
