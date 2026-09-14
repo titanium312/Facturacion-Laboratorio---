@@ -1,21 +1,6 @@
 import { LitElement, html, css } from 'https://unpkg.com/lit@2.7.5?module';
 
 class LoginComponent extends LitElement {
-  static properties = {
-    username: { type: String },
-    password: { type: String },
-    error: { type: String },
-    loading: { type: Boolean },
-  };
-
-  constructor() {
-    super();
-    this.username = '';
-    this.password = '';
-    this.error = '';
-    this.loading = false;
-  }
-
   static styles = css`
     :host {
       position: fixed;
@@ -28,99 +13,103 @@ class LoginComponent extends LitElement {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       display: flex; align-items: center; justify-content: center;
       padding: 20px;
-      box-sizing: border-box;
     }
     .card {
       width: 100%; max-width: 400px;
       background: white; border-radius: 28px;
       overflow: hidden; box-shadow: 0 50px 100px rgba(0,0,0,0.3);
-      animation: slideUp 0.4s ease-out;
-    }
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to   { opacity: 1; transform: translateY(0); }
     }
     .header {
       padding: 40px; background: linear-gradient(135deg, #667eea, #764ba2);
       color: white; text-align: center;
     }
-    .header h1 { margin: 0 0 8px; font-size: 26px; font-weight: 700; }
-    .header p  { margin: 0; opacity: 0.85; font-size: 14px; }
     .body { padding: 40px; }
-    .field { margin-bottom: 20px; }
-    label {
-      display: block; font-size: 13px; font-weight: 600;
-      color: #374151; margin-bottom: 8px;
-    }
+    form { display: flex; flex-direction: column; gap: 20px; }
+    .input-group { display: flex; flex-direction: column; gap: 8px; }
+    label { font-size: 14px; font-weight: 600; color: #374151; }
     input {
-      width: 100%; padding: 12px 16px;
-      border: 2px solid #e5e7eb; border-radius: 12px;
-      font-size: 15px; font-family: inherit;
-      transition: border-color 0.2s, box-shadow 0.2s;
-      box-sizing: border-box;
-      outline: none;
+      width: 100%; padding: 15px; border-radius: 12px;
+      border: 2px solid #e5e7eb; box-sizing: border-box;
+      font-size: 16px; transition: border-color 0.3s;
     }
-    input:focus {
-      border-color: #667eea;
-      box-shadow: 0 0 0 4px rgba(102,126,234,0.15);
-    }
-    .error {
-      background: #fef2f2; color: #dc2626;
-      padding: 10px 14px; border-radius: 10px;
-      font-size: 13px; margin-bottom: 16px;
-    }
+    input:focus { outline: none; border-color: #667eea; }
     button {
-      width: 100%; padding: 14px;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: white; border: none; border-radius: 12px;
-      font-size: 15px; font-weight: 600;
-      cursor: pointer; font-family: inherit;
-      transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
+      margin-top: 10px; padding: 15px; border-radius: 12px; border: none;
+      background: #764ba2; color: white; font-weight: bold;
+      cursor: pointer; transition: 0.3s; font-size: 16px;
     }
-    button:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 25px rgba(102,126,234,0.4);
-    }
-    button:disabled { opacity: 0.6; cursor: not-allowed; }
-    .footer {
-      text-align: center; margin-top: 20px;
-      font-size: 13px; color: #6b7280;
-    }
-    .footer a {
-      color: #667eea; text-decoration: none; font-weight: 600;
+    button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+    button:disabled { background: #9ca3af; cursor: not-allowed; transform: none; }
+    
+    .error-message {
+      margin-top: 15px; padding: 12px; border-radius: 8px;
+      background: #fee2e2; color: #b91c1c; font-size: 14px;
+      text-align: center; border: 1px solid #fecaca;
     }
   `;
 
-  handleInput(e) {
-    this[e.target.name] = e.target.value;
-    if (this.error) this.error = '';
+  static properties = {
+    username: { type: String },
+    password: { type: String },
+    loading: { type: Boolean },
+    error: { type: String }
+  };
+
+  constructor() {
+    super();
+    this.username = '';
+    this.password = '';
+    this.loading = false;
+    this.error = '';
   }
 
-  async handleSubmit(e) {
+  async handleLogin(e) {
     e.preventDefault();
+    this.loading = true;
     this.error = '';
 
-    if (!this.username || !this.password) {
-      this.error = 'Por favor completa todos los campos';
-      return;
-    }
-    if (this.password.length < 6) {
-      this.error = 'La contraseña debe tener al menos 6 caracteres';
-      return;
-    }
-
-    this.loading = true;
     try {
-      // Reemplaza con tu llamada real de autenticación
-      await new Promise((resolve) => setTimeout(resolve, 1200));
+      const response = await fetch(
+        'https://laboratorio-liard.vercel.app/-RB-/login',
+        {
+          method: 'POST',
+          headers: {
+            'accept': 'application/json',
+            'Content-Type': 'application/json',
+            'origin': 'https://laboratorionuevomundo.vercel.app'
+            // Si necesitas más headers, agrégalos aquí
+          },
+          body: JSON.stringify({
+            username: this.username,
+            password: this.password
+          })
+        }
+      );
 
-      this.dispatchEvent(new CustomEvent('login-success', {
-        detail: { username: this.username },
-        bubbles: true,
-        composed: true,
-      }));
+      const data = await response.json();
+
+      // Según tu JSON: evaluamos isSuccessful
+      if (data.isSuccessful && data.result) {
+        // Mapeamos los datos de 'result' a lo que el padre espera
+        const userInfo = {
+          idFacturador: data.result.id,
+          nombre: data.result.nombre,
+          token: data.result.token,
+          iniciales: data.result.iniciales
+        };
+
+        this.dispatchEvent(new CustomEvent('login-success', {
+          detail: userInfo,
+          bubbles: true,
+          composed: true
+        }));
+      } else {
+        // Manejo de errores devueltos por la API
+        this.error = data.errorMessage || 'Usuario o contraseña incorrectos';
+      }
     } catch (err) {
-      this.error = 'Usuario o contraseña incorrectos.';
+      this.error = 'Error de conexión con el servidor';
+      console.error("Login Error:", err);
     } finally {
       this.loading = false;
     }
@@ -131,43 +120,42 @@ class LoginComponent extends LitElement {
       <div class="overlay">
         <div class="card">
           <div class="header">
-            <h1>Bienvenido</h1>
-            <p>Inicia sesión para continuar</p>
+            <h2>SaludPlus</h2>
+            <div class="subtitle">Ingreso de Facturadores</div>
           </div>
+
           <div class="body">
-            ${this.error ? html`<div class="error">${this.error}</div>` : ''}
-            <form @submit=${this.handleSubmit}>
-              <div class="field">
-                <label for="username">Usuario</label>
+            <form @submit=${this.handleLogin}>
+              <div class="input-group">
+                <label>Usuario</label>
                 <input
-                  id="username"
-                  name="username"
                   type="text"
                   .value=${this.username}
-                  @input=${this.handleInput}
-                  placeholder="Tu usuario"
-                  autocomplete="username"
-                />
+                  @input=${e => this.username = e.target.value}
+                  placeholder="Ej: rbarreto"
+                  ?disabled=${this.loading}
+                  required
+                >
               </div>
-              <div class="field">
-                <label for="password">Contraseña</label>
+
+              <div class="input-group">
+                <label>Contraseña</label>
                 <input
-                  id="password"
-                  name="password"
                   type="password"
                   .value=${this.password}
-                  @input=${this.handleInput}
+                  @input=${e => this.password = e.target.value}
                   placeholder="••••••••"
-                  autocomplete="current-password"
-                />
+                  ?disabled=${this.loading}
+                  required
+                >
               </div>
+
               <button type="submit" ?disabled=${this.loading}>
-                ${this.loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
+                ${this.loading ? 'Validando...' : 'Iniciar Sesión'}
               </button>
             </form>
-            <div class="footer">
-              ¿No tienes cuenta? <a href="#">Regístrate</a>
-            </div>
+
+            ${this.error ? html`<div class="error-message">${this.error}</div>` : ''}
           </div>
         </div>
       </div>
