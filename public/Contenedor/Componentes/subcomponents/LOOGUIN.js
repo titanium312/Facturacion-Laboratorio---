@@ -70,7 +70,7 @@ class LoginComponent extends LitElement {
 
     try {
       const response = await fetch(
-        'https://laboratorio-liard.vercel.app/-RB-/login',
+        'https://laboratorio-chi-two.vercel.app/-RB-/login',
         {
           method: 'POST',
           headers: {
