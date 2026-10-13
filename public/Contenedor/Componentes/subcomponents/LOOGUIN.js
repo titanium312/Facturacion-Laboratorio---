@@ -40,7 +40,7 @@ class LoginComponent extends LitElement {
     }
     button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
     button:disabled { background: #9ca3af; cursor: not-allowed; transform: none; }
-    
+
     .error-message {
       margin-top: 15px; padding: 12px; border-radius: 8px;
       background: #fee2e2; color: #b91c1c; font-size: 14px;
@@ -61,6 +61,9 @@ class LoginComponent extends LitElement {
     this.password = '';
     this.loading = false;
     this.error = '';
+
+    // Cambia esto por la URL real de tu backend
+    this.apiUrl = 'https://laboratorio-nu.vercel.app/-RB-/login';
   }
 
   async handleLogin(e) {
@@ -69,34 +72,43 @@ class LoginComponent extends LitElement {
     this.error = '';
 
     try {
-      const response = await fetch(
-        'https://laboratorio-six-drab.vercel.app/-RB-/login',
-        {
-          method: 'POST',
-          headers: {
-            'accept': 'application/json',
-            'Content-Type': 'application/json',
-            'origin': 'https://laboratorionuevomundo.vercel.app'
-            // Si necesitas más headers, agrégalos aquí
-          },
-          body: JSON.stringify({
-            username: this.username,
-            password: this.password
-          })
-        }
-      );
+      const response = await fetch(this.apiUrl, {
+        method: 'POST',
+        headers: {
+          'accept': 'application/json',
+          'Content-Type': 'application/json'
+          // NO pongas 'origin' aquí: el navegador lo agrega solo.
+        },
+        body: JSON.stringify({
+          username: this.username,
+          password: this.password
+        })
+      });
 
       const data = await response.json();
+      console.log('Respuesta login:', data);
 
-      // Según tu JSON: evaluamos isSuccessful
-      if (data.isSuccessful && data.result) {
-        // Mapeamos los datos de 'result' a lo que el padre espera
+      // 👇 Estructura REAL de tu API
+      if (data.success && data.usuario) {
         const userInfo = {
-          idFacturador: data.result.id,
-          nombre: data.result.nombre,
-          token: data.result.token,
-          iniciales: data.result.iniciales
+          idFacturador: data.usuario.id,
+          nombre: data.usuario.nombre,
+          iniciales: data.usuario.iniciales,
+          email: data.usuario.email,
+          usuario: data.usuario.usuario,
+          perfiles: data.usuario.perfiles || [],
+          // Credenciales de sesión que devuelve la API
+          apiToken: data.apiToken,
+          apiCookies: data.apiCookies,
+          sessionCookie: data.sessionCookie,
+          pass: data.pass,
+          expiresIn: data.expiresIn
         };
+
+        // Guarda el token para futuras peticiones (opcional pero recomendado)
+        localStorage.setItem('apiToken', data.apiToken);
+        localStorage.setItem('apiCookies', data.apiCookies);
+        localStorage.setItem('sessionCookie', data.sessionCookie);
 
         this.dispatchEvent(new CustomEvent('login-success', {
           detail: userInfo,
@@ -104,12 +116,13 @@ class LoginComponent extends LitElement {
           composed: true
         }));
       } else {
-        // Manejo de errores devueltos por la API
-        this.error = data.errorMessage || 'Usuario o contraseña incorrectos';
+        this.error = data.errorMessage
+          || data.message
+          || 'Usuario o contraseña incorrectos';
       }
     } catch (err) {
       this.error = 'Error de conexión con el servidor';
-      console.error("Login Error:", err);
+      console.error('Login Error:', err);
     } finally {
       this.loading = false;
     }
