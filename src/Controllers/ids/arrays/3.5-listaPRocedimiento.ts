@@ -42,7 +42,7 @@ export const procedimientosDB = [
   { id: 9737, cups: "906610", nombre: "ANTÍGENO ESPECÍFICO DE PRÓSTATA SEMIAUTOMATIZADO O AUTOMATIZADO" },
   { id: 9894, cups: "906915", nombre: "PRUEBA NO TREPONEMICA MANUAL" },
   { id: 9898, cups: "907002", nombre: "COPROLÓGICO" },
-  { id: 9904, cups: "907008", nombre: "SANGRE OCULTA EN MATERIA FECAL [GUAYACO O EQUIVALENTE] +" },
+  { id: 9904, cups: "907009", nombre: "Sangre oculta en materia fecal (determinación de hemoglobina humana específica" },
   { id: 9918, cups: "907106", nombre: "UROANALISIS CON SEDIMENTO Y DENSIDAD URINARIA" },
   { id: 10126, cups: "911015", nombre: "HEMOCLASIFICACION FACTOR Rh [FACTOR D] POR MICROTECNICA" },
   { id: 10128, cups: "911017", nombre: "HEMOCLASIFICACION GRUPO ABO, DIRECTA O GLOBULAR POR MICROTÉCNICA" }
